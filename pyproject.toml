@@ -1,0 +1,17 @@
+[project]
+name = "cognitive-modeling-passivebcis"
+version = "1.0"
+description = "All the dependencies of the project."
+authors = [
+    {name = "Prateek",email = "kharanpv@mail.uc.edu"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "obs-websocket-py (>=1.0,<2.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

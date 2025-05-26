@@ -1,3 +1,3 @@
-class Screen_Media_Handler:
+class Screen_Handler:
     def __init__(self):
         pass

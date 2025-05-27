@@ -1,139 +1,219 @@
 from pynput import keyboard, mouse
 import pandas as pd
 import numpy as np
+from multiprocessing import Process, Pipe
 
 """
-Keyboard and Mouse Event Handlers
+Keyboard and Mouse Event Handlers for Cognitive Modeling BCI System
 
-This module provides classes for tracking and logging keyboard and mouse events
-using the pynput library. Events are stored in pandas DataFrames with timestamps.
+This module provides classes for capturing and logging keyboard and mouse events
+using the pynput library in separate processes. Events are collected with high-precision 
+timestamps and stored in pandas DataFrames for analysis.
 
 Classes:
-    Keyboard_Handler: Records keyboard press and release events
-    Mouse_Handler: Records mouse movements, clicks, and scroll events
+    Keyboard_Handler: Captures keyboard press and release events with timestamps
+    Mouse_Handler: Captures mouse movements, clicks, and scroll events with position data
+
+Dependencies:
+    - pynput
+    - pandas
+    - numpy
+    - multiprocessing
 """
 
 class Keyboard_Handler:
     """
-    Handles keyboard input events (key press and release).
-    
-    Records keyboard events with timestamps in a pandas DataFrame.
-    
+    Asynchronous keyboard input event handler for BCI data collection.
+
+    Captures keyboard events (press and release) in a separate process. Events are
+    timestamped and collected for later analysis. Both character keys and special keys
+    are supported.
+
     Attributes:
-        log (DataFrame): Stores keyboard events with time, key, and event type
-        listener (keyboard.Listener): pynput listener for keyboard events
+        log_data (list): Raw event data collected from the child process
+        parent_conn (Connection): Parent end of the multiprocessing pipe
+        child_conn (Connection): Child end of the multiprocessing pipe  
+        process (Process): Separate process running the keyboard listener
+        active (bool): Flag indicating if the listener is currently running
+
+    Example:
+        >>> handler = Keyboard_Handler()
+        >>> handler.trigger_listener('start')
+        >>> # ... perform other tasks ...
+        >>> handler.trigger_listener('stop')
+        >>> df = handler.log
     """
     def __init__(self):
-        self.log = pd.DataFrame(columns=['time', 'key', 'event'])
-        self.listner = keyboard.Listener(on_press=self.on_press, on_release=self.on_release)
-    
+        self.log_data = []
+        self.parent_conn, self.child_conn = Pipe()
+        self.process = Process(target=self._run_listener, args=(self.child_conn,))
+        self.active = False
+
     def trigger_listener(self, command):
         """
-        Start or stop the keyboard listener.
-        
+        Start or stop the keyboard listener process.
+
         Args:
-            command (str): 'start' to begin listening or 'stop' to end
+            command (str): 'start' to begin capturing events, 'stop' to halt and retrieve data.
         """
-        if command == 'start':
-            self.listner.start()
-        elif command == 'stop':
-            self.listner.stop()
+        if command == 'start' and not self.active:
+            self.process.start()
+            self.active = True
+        elif command == 'stop' and self.active:
+            self.parent_conn.send('stop')
+            self.process.join()
+            if self.parent_conn.poll():
+                self.log_data = self.parent_conn.recv()
+            self.active = False
 
-    def on_press(self, key):
+    def _run_listener(self, conn):
         """
-        Callback for key press events.
-        
+        Internal method that runs the keyboard listener in a separate process.
+
         Args:
-            key (keyboard.Key or keyboard.KeyCode): The key that was pressed
+            conn (Connection): Child end of the pipe for communication with parent.
         """
-        if isinstance(key, keyboard.KeyCode):     
-            new_entry = pd.DataFrame({'time': [pd.Timestamp.now()], 'key': [key.char], 'event': ['press']})
-        elif isinstance(key, keyboard.Key):
-            new_entry = pd.DataFrame({'time': [pd.Timestamp.now()], 'key': [key], 'event': ['press']})
+        log_data = []
 
-        self.log = pd.concat([self.log, new_entry], ignore_index=True)
+        def on_press(key):
+            try:
+                k = key.char
+            except AttributeError:
+                k = str(key)
+            log_data.append({
+                'time': pd.Timestamp.now(),
+                'key': k,
+                'event': 'press'
+            })
 
-    def on_release(self, key):
+        def on_release(key):
+            try:
+                k = key.char
+            except AttributeError:
+                k = str(key)
+            log_data.append({
+                'time': pd.Timestamp.now(),
+                'key': k,
+                'event': 'release'
+            })
+
+        listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+        listener.start()
+
+        while True:
+            if conn.poll():
+                message = conn.recv()
+                if message == 'stop':
+                    listener.stop()
+                    break
+
+        conn.send(log_data)
+    
+    @property
+    def log(self):
         """
-        Callback for key release events.
-        
-        Args:
-            key (keyboard.Key or keyboard.KeyCode): The key that was released
+        Returns:
+            DataFrame: Captured keyboard events with columns ['time', 'key', 'event'].
         """
-        if isinstance(key, keyboard.KeyCode):     
-            new_entry = pd.DataFrame({'time': [pd.Timestamp.now()], 'key': [key.char], 'event': ['release']})
-        elif isinstance(key, keyboard.Key):
-            new_entry = pd.DataFrame({'time': [pd.Timestamp.now()], 'key': [key], 'event': ['release']})
-
-        self.log = pd.concat([self.log, new_entry], ignore_index=True)
+        return pd.DataFrame(self.log_data)
 
 
 class Mouse_Handler:
     """
-    Handles mouse input events (movement, clicks, and scrolling).
-    
-    Records mouse events with timestamps and position data in a pandas DataFrame.
-    
+    Asynchronous mouse input event handler for BCI data collection.
+
+    Captures mouse interactions (movement, clicks, scrolling) in a separate process.
+    Mouse events include position, button, and scroll data, all timestamped.
+
     Attributes:
-        log (DataFrame): Stores mouse events with time, position, event type, button, and scroll data
-        listener (mouse.Listener): pynput listener for mouse events
+        log_data (list): Raw event data collected from the child process
+        parent_conn (Connection): Parent end of the multiprocessing pipe
+        child_conn (Connection): Child end of the multiprocessing pipe
+        process (Process): Separate process running the mouse listener
+        active (bool): Flag indicating if the listener is currently running
+
+    Example:
+        >>> handler = Mouse_Handler()
+        >>> handler.trigger_listener('start')
+        >>> # ... user interacts with mouse ...
+        >>> handler.trigger_listener('stop')
+        >>> df = handler.log
     """
     def __init__(self):
-        self.log = pd.DataFrame(columns=['time', 'x', 'y', 'event', 'button', 'scroll'])  # Fixed typo in 'columns'
-        self.listner = mouse.Listener(on_click=self.on_click, on_move=self.on_move, on_scroll=self.on_scroll)
-    
+        self.log_data = []
+        self.parent_conn, self.child_conn = Pipe()
+        self.process = Process(target=self._run_listener, args=(self.child_conn,))
+        self.active = False
+
     def trigger_listener(self, command):
         """
-        Start or stop the mouse listener.
-        
+        Start or stop the mouse listener process.
+
         Args:
-            command (str): 'start' to begin listening or 'stop' to end
+            command (str): 'start' to begin capturing events, 'stop' to halt and retrieve data.
         """
-        if command == 'start':
-            self.listner.start()
-        elif command == 'stop':
-            self.listner.stop()
+        if command == 'start' and not self.active:
+            self.process.start()
+            self.active = True
+        elif command == 'stop' and self.active:
+            self.parent_conn.send('stop')
+            self.process.join()
+            if self.parent_conn.poll():
+                self.log_data = self.parent_conn.recv()
+            self.active = False
 
-    def on_move(self, x, y):
+    def _run_listener(self, conn):
         """
-        Callback for mouse movement events.
-        
+        Internal method that runs the mouse listener in a separate process.
+
         Args:
-            x (int): X-coordinate of the pointer
-            y (int): Y-coordinate of the pointer
+            conn (Connection): Child end of the pipe for parent communication.
         """
-        new_entry = pd.DataFrame({'time': [pd.Timestamp.now()], 'x': [x], 'y': [y], 'event': ['move'], 
-                                 'button': [None], 'scroll': [None]})
-        self.log = pd.concat([self.log, new_entry], ignore_index=True)
+        log_data = []
 
-    def on_click(self, x, y, button, pressed):
-        """
-        Callback for mouse click events.
-        
-        Args:
-            x (int): X-coordinate of the pointer
-            y (int): Y-coordinate of the pointer
-            button (mouse.Button): The button that was clicked
-            pressed (bool): True if pressed, False if released
-        """
-        new_entry = pd.DataFrame({'time': [pd.Timestamp.now()], 'x': [x], 'y': [y], 
-                                 'event': ['press' if pressed else 'release'], 
-                                 'button': [button], 'scroll': [None]})
-        self.log = pd.concat([self.log, new_entry], ignore_index=True)
+        def on_move(x, y):
+            log_data.append({
+                'time': pd.Timestamp.now(),
+                'x': x,
+                'y': y,
+                'event': 'move'
+            })
 
-    def on_scroll(self, x, y, dx, dy):
-        """
-        Callback for mouse scroll events.
-        
-        Args:
-            x (int): X-coordinate of the pointer
-            y (int): Y-coordinate of the pointer
-            dx (int): Horizontal scroll (not used)
-            dy (int): Vertical scroll amount
-        """
-        new_entry = pd.DataFrame({'time': [pd.Timestamp.now()], 'x': [x], 'y': [y], 'event': ['scroll'], 
-                                 'button': [None], 'scroll': [dy]})
-        self.log = pd.concat([self.log, new_entry], ignore_index=True)
-        
+        def on_click(x, y, button, pressed):
+            log_data.append({
+                'time': pd.Timestamp.now(),
+                'x': x,
+                'y': y,
+                'button': str(button),
+                'event': 'press' if pressed else 'release'
+            })
 
+        def on_scroll(x, y, dx, dy):
+            log_data.append({
+                'time': pd.Timestamp.now(),
+                'x': x,
+                'y': y,
+                'scroll_dx': dx,
+                'scroll_dy': dy,
+                'event': 'scroll'
+            })
 
+        listener = mouse.Listener(on_click=on_click, on_scroll=on_scroll, on_move=on_move)
+        listener.start()
+
+        while True:
+            if conn.poll():
+                message = conn.recv()
+                if message == 'stop':
+                    listener.stop()
+                    break
+
+        conn.send(log_data)
+    
+    @property
+    def log(self):
+        """
+        Returns:
+            DataFrame: Captured mouse events with columns such as ['time', 'x', 'y', 'button', 'event', 'scroll_dx', 'scroll_dy'].
+        """
+        return pd.DataFrame(self.log_data)

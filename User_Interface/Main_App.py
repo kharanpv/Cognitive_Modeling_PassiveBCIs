@@ -207,6 +207,9 @@ class AppUI:
             return
 
         try:
+            self._update_status("Starting recording...", "orange")
+            self.root.update()  # Force UI update
+            
             self.central_data_controller.start_recording()
             self._update_status("Recording Started", "blue")
         except Exception as e:

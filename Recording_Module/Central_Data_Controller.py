@@ -24,7 +24,7 @@ class Central_Data_Controller:
         self.latest_stop_time = str()
 
     def start_recording(self):
-        self.latest_start_time = datetime.datetime.now().strftime('%Y-%M-%D_%H-%M-%S')
+        self.latest_start_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')  
 
         if 'k' in self.active_handlers:
             self.keyboard_handler.trigger_listener('start')
@@ -32,19 +32,21 @@ class Central_Data_Controller:
         if 'm' in self.active_handlers:
             self.mouse_handler.trigger_listener('start')
 
-    
     def stop_recording(self, recording_location):
-        self.latest_stop_time = datetime.datetime.now().strftime('%Y-%M-%D_%H-%M-%S')
-        recording_folder = recording_location + self.latest_start_time + '_--_' + self.latest_stop_time
+        self.latest_stop_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        recording_folder = os.path.join(recording_location, self.latest_start_time + '_--_' + self.latest_stop_time)
+        
+        # Create the recording folder
+        os.makedirs(recording_folder, exist_ok=True)
         
         if 'k' in self.active_handlers:
             self.keyboard_handler.trigger_listener('stop')
-            key_log = self.keyboard_handler.log
-            key_log.to_csv(f'{recording_folder}/key_log.csv', index=False)
+            key_log = self.keyboard_handler.log 
+            key_log.to_csv(os.path.join(recording_folder, 'key_log.csv'), index=False)
             self.active_handlers.remove('k')
 
         if 'm' in self.active_handlers:
-            self.mouse_handler.trigger_listener('stop')
-            mouse_log = self.mouse_handler.log
-            mouse_log.to_csv(f'{recording_folder}/mouse_log.csv', index=False)
+            self.mouse_handler.trigger_listener('stop') 
+            mouse_log = self.mouse_handler.log 
+            mouse_log.to_csv(os.path.join(recording_folder, 'mouse_log.csv'), index=False)
             self.active_handlers.remove('m')

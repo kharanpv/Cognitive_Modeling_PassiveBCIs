@@ -1,69 +1,66 @@
 from pynput import keyboard, mouse
 import pandas as pd
-from multiprocessing import Process, Queue, Event
+from multiprocessing import Process, Pipe, Event
 import time
+import os
 
 """
 Keyboard and Mouse Event Handlers for Cognitive Modeling BCI System
 
 Provides classes for capturing keyboard and mouse events using pynput in separate processes.
+Each handler saves its log data directly to disk upon stopping.
 """
 
 class Keyboard_Handler:
     """
-    Asynchronous keyboard event handler using multiprocessing.Queue.
+    Asynchronous keyboard event handler.
 
-    Listens for keyboard events in a separate process and stores them in a queue.
+    Captures keyboard events in a separate process and saves them directly to disk.
     """
     def __init__(self):
-        self.log_data = []
-        self.queue = Queue()
         self.stop_event = Event()
-        self.process = Process(target=self._run_listener, args=(self.queue, self.stop_event), daemon=True)
+        self.process = None
         self.active = False
+        self.parent_conn, self.child_conn  = Pipe() 
 
-    def trigger_listener(self, command):
+    def trigger_listener(self, command, save_dir=None):
         """
         Start or stop the keyboard listener process.
 
         Parameters:
-            command (str): 'start' to begin listening, 'stop' to end and collect events.
-
-        Returns:
-            None
+            command (str): 'start' to begin listening, 'stop' to end and save events.
+            save_dir (str, optional): Directory to save the log when stopping.
         """
         if command == 'start' and not self.active:
-            self.queue = Queue()
             self.stop_event = Event()
-            self.process = Process(target=self._run_listener, args=(self.queue, self.stop_event), daemon=True)
+            self.process = Process(target=self._run_listener, args=(self.stop_event, self.child_conn), daemon=True)
             self.process.start()
             self.active = True
+
         elif command == 'stop' and self.active:
             self.stop_event.set()
-            self.process.join(timeout=5)  # wait 5 seconds max
-            if self.process.is_alive():
-                self.process.terminate()
-            while not self.queue.empty():
-                self.log_data.append(self.queue.get())
+            self.parent_conn.send(save_dir)
+            self.process.join()
             self.active = False
 
-    def _run_listener(self, queue, stop_event):
+    def _run_listener(self, stop_event, pipe_conn):
         """
-        Listen for keyboard events and put them in the queue.
+        Listen for keyboard events and store them locally. Save to disk upon stopping.
 
         Parameters:
-            queue (multiprocessing.Queue): Queue to store events.
             stop_event (multiprocessing.Event): Event to signal stopping.
 
         Returns:
             None
         """
+        log_data = []
+
         def on_press(key):
             try:
                 k = key.char
             except AttributeError:
                 k = str(key)
-            queue.put({
+            log_data.append({
                 'time': pd.Timestamp.now(),
                 'key': k,
                 'event': 'press'
@@ -74,7 +71,7 @@ class Keyboard_Handler:
                 k = key.char
             except AttributeError:
                 k = str(key)
-            queue.put({
+            log_data.append({
                 'time': pd.Timestamp.now(),
                 'key': k,
                 'event': 'release'
@@ -85,69 +82,61 @@ class Keyboard_Handler:
         while not stop_event.is_set():
             time.sleep(0.01)
         listener.stop()
-    
-    @property
-    def log(self):
-        """
-        Get all recorded keyboard events as a DataFrame.
+        listener.join()
 
-        Returns:
-            pd.DataFrame: DataFrame with event time, key, and event type.
-        """
-        return pd.DataFrame(self.log_data)
-
+        # Save to CSV if directory provided
+        save_dir = pipe_conn.recv()
+        if save_dir:
+            df = pd.DataFrame(log_data)
+            os.makedirs(save_dir, exist_ok=True)
+            df.to_csv(os.path.join(save_dir, 'keyboard_log.csv'), index=False)
 
 class Mouse_Handler:
     """
-    Asynchronous mouse event handler using multiprocessing.Queue.
+    Asynchronous mouse event handler.
 
-    Listens for mouse events in a separate process and stores them in a queue.
+    Captures mouse events in a separate process and saves them directly to disk.
     """
     def __init__(self):
-        self.log_data = []
-        self.queue = Queue()
         self.stop_event = Event()
-        self.process = Process(target=self._run_listener, args=(self.queue, self.stop_event), daemon=True)
+        self.process = None
         self.active = False
+        self.parent_conn, self.child_conn  = Pipe()
 
-    def trigger_listener(self, command):
+    def trigger_listener(self, command, save_dir=None):
         """
         Start or stop the mouse listener process.
 
         Parameters:
-            command (str): 'start' to begin listening, 'stop' to end and collect events.
-
-        Returns:
-            None
+            command (str): 'start' to begin listening, 'stop' to end and save events.
+            save_dir (str, optional): Directory to save the log when stopping.
         """
         if command == 'start' and not self.active:
-            self.queue = Queue()
             self.stop_event = Event()
-            self.process = Process(target=self._run_listener, args=(self.queue, self.stop_event), daemon=True)
+            self.process = Process(target=self._run_listener, args=(self.stop_event, self.child_conn), daemon=True)
             self.process.start()
             self.active = True
+
         elif command == 'stop' and self.active:
             self.stop_event.set()
-            self.process.join(timeout=5)  # wait 5 seconds max
-            if self.process.is_alive():
-                self.process.terminate()
-            while not self.queue.empty():
-                self.log_data.append(self.queue.get())
+            self.parent_conn.send(save_dir)
+            self.process.join()
             self.active = False
 
-    def _run_listener(self, queue, stop_event):
+    def _run_listener(self, stop_event, pipe_conn):
         """
-        Listen for mouse events and put them in the queue.
+        Listen for mouse events and store them locally. Save to disk upon stopping.
 
         Parameters:
-            queue (multiprocessing.Queue): Queue to store events.
             stop_event (multiprocessing.Event): Event to signal stopping.
 
         Returns:
             None
         """
+        log_data = []
+
         def on_move(x, y):
-            queue.put({
+            log_data.append({
                 'time': pd.Timestamp.now(),
                 'x': x,
                 'y': y,
@@ -155,7 +144,7 @@ class Mouse_Handler:
             })
 
         def on_click(x, y, button, pressed):
-            queue.put({
+            log_data.append({
                 'time': pd.Timestamp.now(),
                 'x': x,
                 'y': y,
@@ -164,7 +153,7 @@ class Mouse_Handler:
             })
 
         def on_scroll(x, y, dx, dy):
-            queue.put({
+            log_data.append({
                 'time': pd.Timestamp.now(),
                 'x': x,
                 'y': y,
@@ -178,13 +167,11 @@ class Mouse_Handler:
         while not stop_event.is_set():
             time.sleep(0.01)
         listener.stop()
-    
-    @property
-    def log(self):
-        """
-        Get all recorded mouse events as a DataFrame.
+        listener.join()
 
-        Returns:
-            pd.DataFrame: DataFrame with event time, coordinates, event type, and details.
-        """
-        return pd.DataFrame(self.log_data)
+        # Save to CSV if directory provided
+        save_dir = pipe_conn.recv()
+        if save_dir:
+            df = pd.DataFrame(log_data)
+            os.makedirs(save_dir, exist_ok=True)
+            df.to_csv(os.path.join(save_dir, 'mouse_log.csv'), index=False)

@@ -40,13 +40,9 @@ class Central_Data_Controller:
         os.makedirs(recording_folder, exist_ok=True)
         
         if 'k' in self.active_handlers:
-            self.keyboard_handler.trigger_listener('stop')
-            key_log = self.keyboard_handler.log 
-            key_log.to_csv(os.path.join(recording_folder, 'key_log.csv'), index=False)
+            self.keyboard_handler.trigger_listener('stop', recording_folder)
             self.active_handlers.remove('k')
 
         if 'm' in self.active_handlers:
-            self.mouse_handler.trigger_listener('stop') 
-            mouse_log = self.mouse_handler.log 
-            mouse_log.to_csv(os.path.join(recording_folder, 'mouse_log.csv'), index=False)
+            self.mouse_handler.trigger_listener('stop', recording_folder)
             self.active_handlers.remove('m')

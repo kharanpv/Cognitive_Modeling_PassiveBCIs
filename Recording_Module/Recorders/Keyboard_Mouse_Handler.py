@@ -1,86 +1,69 @@
 from pynput import keyboard, mouse
 import pandas as pd
-import numpy as np
-from multiprocessing import Process, Pipe
+from multiprocessing import Process, Queue, Event
+import time
 
 """
 Keyboard and Mouse Event Handlers for Cognitive Modeling BCI System
 
-This module provides classes for capturing and logging keyboard and mouse events
-using the pynput library in separate processes. Events are collected with high-precision 
-timestamps and stored in pandas DataFrames for analysis.
-
-Classes:
-    Keyboard_Handler: Captures keyboard press and release events with timestamps
-    Mouse_Handler: Captures mouse movements, clicks, and scroll events with position data
-
-Dependencies:
-    - pynput
-    - pandas
-    - numpy
-    - multiprocessing
+Provides classes for capturing keyboard and mouse events using pynput in separate processes.
 """
 
 class Keyboard_Handler:
     """
-    Asynchronous keyboard input event handler for BCI data collection.
+    Asynchronous keyboard event handler using multiprocessing.Queue.
 
-    Captures keyboard events (press and release) in a separate process. Events are
-    timestamped and collected for later analysis. Both character keys and special keys
-    are supported.
-
-    Attributes:
-        log_data (list): Raw event data collected from the child process
-        parent_conn (Connection): Parent end of the multiprocessing pipe
-        child_conn (Connection): Child end of the multiprocessing pipe  
-        process (Process): Separate process running the keyboard listener
-        active (bool): Flag indicating if the listener is currently running
-
-    Example:
-        >>> handler = Keyboard_Handler()
-        >>> handler.trigger_listener('start')
-        >>> # ... perform other tasks ...
-        >>> handler.trigger_listener('stop')
-        >>> df = handler.log
+    Listens for keyboard events in a separate process and stores them in a queue.
     """
     def __init__(self):
         self.log_data = []
-        self.parent_conn, self.child_conn = Pipe()
-        self.process = Process(target=self._run_listener, args=(self.child_conn,))
+        self.queue = Queue()
+        self.stop_event = Event()
+        self.process = Process(target=self._run_listener, args=(self.queue, self.stop_event), daemon=True)
         self.active = False
 
     def trigger_listener(self, command):
         """
         Start or stop the keyboard listener process.
 
-        Args:
-            command (str): 'start' to begin capturing events, 'stop' to halt and retrieve data.
+        Parameters:
+            command (str): 'start' to begin listening, 'stop' to end and collect events.
+
+        Returns:
+            None
         """
         if command == 'start' and not self.active:
+            self.queue = Queue()
+            self.stop_event = Event()
+            self.process = Process(target=self._run_listener, args=(self.queue, self.stop_event), daemon=True)
             self.process.start()
             self.active = True
         elif command == 'stop' and self.active:
-            self.parent_conn.send('stop')
-            self.process.join()
-            if self.parent_conn.poll():
-                self.log_data = self.parent_conn.recv()
+            self.stop_event.set()
+            self.process.join(timeout=5)  # wait 5 seconds max
+            if self.process.is_alive():
+                self.process.terminate()
+            while not self.queue.empty():
+                self.log_data.append(self.queue.get())
             self.active = False
 
-    def _run_listener(self, conn):
+    def _run_listener(self, queue, stop_event):
         """
-        Internal method that runs the keyboard listener in a separate process.
+        Listen for keyboard events and put them in the queue.
 
-        Args:
-            conn (Connection): Child end of the pipe for communication with parent.
+        Parameters:
+            queue (multiprocessing.Queue): Queue to store events.
+            stop_event (multiprocessing.Event): Event to signal stopping.
+
+        Returns:
+            None
         """
-        log_data = []
-
         def on_press(key):
             try:
                 k = key.char
             except AttributeError:
                 k = str(key)
-            log_data.append({
+            queue.put({
                 'time': pd.Timestamp.now(),
                 'key': k,
                 'event': 'press'
@@ -91,7 +74,7 @@ class Keyboard_Handler:
                 k = key.char
             except AttributeError:
                 k = str(key)
-            log_data.append({
+            queue.put({
                 'time': pd.Timestamp.now(),
                 'key': k,
                 'event': 'release'
@@ -99,80 +82,72 @@ class Keyboard_Handler:
 
         listener = keyboard.Listener(on_press=on_press, on_release=on_release)
         listener.start()
-
-        while True:
-            if conn.poll():
-                message = conn.recv()
-                if message == 'stop':
-                    listener.stop()
-                    break
-
-        conn.send(log_data)
+        while not stop_event.is_set():
+            time.sleep(0.01)
+        listener.stop()
     
     @property
     def log(self):
         """
+        Get all recorded keyboard events as a DataFrame.
+
         Returns:
-            DataFrame: Captured keyboard events with columns ['time', 'key', 'event'].
+            pd.DataFrame: DataFrame with event time, key, and event type.
         """
         return pd.DataFrame(self.log_data)
 
 
 class Mouse_Handler:
     """
-    Asynchronous mouse input event handler for BCI data collection.
+    Asynchronous mouse event handler using multiprocessing.Queue.
 
-    Captures mouse interactions (movement, clicks, scrolling) in a separate process.
-    Mouse events include position, button, and scroll data, all timestamped.
-
-    Attributes:
-        log_data (list): Raw event data collected from the child process
-        parent_conn (Connection): Parent end of the multiprocessing pipe
-        child_conn (Connection): Child end of the multiprocessing pipe
-        process (Process): Separate process running the mouse listener
-        active (bool): Flag indicating if the listener is currently running
-
-    Example:
-        >>> handler = Mouse_Handler()
-        >>> handler.trigger_listener('start')
-        >>> # ... user interacts with mouse ...
-        >>> handler.trigger_listener('stop')
-        >>> df = handler.log
+    Listens for mouse events in a separate process and stores them in a queue.
     """
     def __init__(self):
         self.log_data = []
-        self.parent_conn, self.child_conn = Pipe()
-        self.process = Process(target=self._run_listener, args=(self.child_conn,))
+        self.queue = Queue()
+        self.stop_event = Event()
+        self.process = Process(target=self._run_listener, args=(self.queue, self.stop_event), daemon=True)
         self.active = False
 
     def trigger_listener(self, command):
         """
         Start or stop the mouse listener process.
 
-        Args:
-            command (str): 'start' to begin capturing events, 'stop' to halt and retrieve data.
+        Parameters:
+            command (str): 'start' to begin listening, 'stop' to end and collect events.
+
+        Returns:
+            None
         """
         if command == 'start' and not self.active:
+            self.queue = Queue()
+            self.stop_event = Event()
+            self.process = Process(target=self._run_listener, args=(self.queue, self.stop_event), daemon=True)
             self.process.start()
             self.active = True
         elif command == 'stop' and self.active:
-            self.parent_conn.send('stop')
-            self.process.join()
-            if self.parent_conn.poll():
-                self.log_data = self.parent_conn.recv()
+            self.stop_event.set()
+            self.process.join(timeout=5)  # wait 5 seconds max
+            if self.process.is_alive():
+                self.process.terminate()
+            while not self.queue.empty():
+                self.log_data.append(self.queue.get())
             self.active = False
 
-    def _run_listener(self, conn):
+    def _run_listener(self, queue, stop_event):
         """
-        Internal method that runs the mouse listener in a separate process.
+        Listen for mouse events and put them in the queue.
 
-        Args:
-            conn (Connection): Child end of the pipe for parent communication.
+        Parameters:
+            queue (multiprocessing.Queue): Queue to store events.
+            stop_event (multiprocessing.Event): Event to signal stopping.
+
+        Returns:
+            None
         """
-        log_data = []
-
         def on_move(x, y):
-            log_data.append({
+            queue.put({
                 'time': pd.Timestamp.now(),
                 'x': x,
                 'y': y,
@@ -180,7 +155,7 @@ class Mouse_Handler:
             })
 
         def on_click(x, y, button, pressed):
-            log_data.append({
+            queue.put({
                 'time': pd.Timestamp.now(),
                 'x': x,
                 'y': y,
@@ -189,7 +164,7 @@ class Mouse_Handler:
             })
 
         def on_scroll(x, y, dx, dy):
-            log_data.append({
+            queue.put({
                 'time': pd.Timestamp.now(),
                 'x': x,
                 'y': y,
@@ -200,20 +175,16 @@ class Mouse_Handler:
 
         listener = mouse.Listener(on_click=on_click, on_scroll=on_scroll, on_move=on_move)
         listener.start()
-
-        while True:
-            if conn.poll():
-                message = conn.recv()
-                if message == 'stop':
-                    listener.stop()
-                    break
-
-        conn.send(log_data)
+        while not stop_event.is_set():
+            time.sleep(0.01)
+        listener.stop()
     
     @property
     def log(self):
         """
+        Get all recorded mouse events as a DataFrame.
+
         Returns:
-            DataFrame: Captured mouse events with columns such as ['time', 'x', 'y', 'button', 'event', 'scroll_dx', 'scroll_dy'].
+            pd.DataFrame: DataFrame with event time, coordinates, event type, and details.
         """
         return pd.DataFrame(self.log_data)

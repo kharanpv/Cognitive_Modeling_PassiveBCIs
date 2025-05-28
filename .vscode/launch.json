@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Main_App.py (Poetry)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/User_Interface/Main_App.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}

@@ -14,7 +14,6 @@ class AppUI:
         self.root.geometry("1200x800")  # Width x Height
 
         # Initialize checkbox variables
-        self.record_dom_var = BooleanVar()
         self.record_keyboard_var = BooleanVar()
         self.record_mouse_var = BooleanVar()
         self.record_screen_var = BooleanVar()
@@ -95,8 +94,6 @@ class AppUI:
         checkbox_frame.pack(side='top', fill='x')
         
         # Add checkboxes
-        Checkbutton(checkbox_frame, text="Record DOM", 
-                   variable=self.record_dom_var).pack(anchor='w', pady=5)
         Checkbutton(checkbox_frame, text="Record Keyboard", 
                    variable=self.record_keyboard_var).pack(anchor='w', pady=5)
         Checkbutton(checkbox_frame, text="Record Mouse", 
@@ -182,21 +179,17 @@ class AppUI:
         # Clear any previous handlers to avoid duplicates
         self.central_data_controller.active_handlers = []
         
-        if self.record_dom_var.get():
-            # DOM checkbox is a dummy, don't count as selected mode
-            pass
-        
         if self.record_keyboard_var.get():
             self.central_data_controller.active_handlers.append('k')
             recording_modes_selected = True
         
         if self.record_mouse_var.get():
-            self.central_data_controller.active_handlers.append('m')  # Fixed: was 'k', should be 'm' for mouse
+            self.central_data_controller.active_handlers.append('m')
             recording_modes_selected = True
 
         if self.record_screen_var.get():
-            # Screen checkbox is a dummy, don't count as selected mode
-            pass
+            self.central_data_controller.active_handlers.append('s')
+            recording_modes_selected = True
 
         if self.record_webcam_var.get():
             # Webcam checkbox is a dummy, don't count as selected mode
@@ -212,6 +205,7 @@ class AppUI:
             
             self.central_data_controller.start_recording()
             self._update_status("Recording Started", "blue")
+            
         except Exception as e:
             self._update_status(f"Error: {str(e)}", "red")
             print(f"Error in start_recording: {e}")

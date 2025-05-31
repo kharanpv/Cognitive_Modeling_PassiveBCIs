@@ -1,54 +1,22 @@
 from pynput import keyboard, mouse
+from .Handler import Handler
 import pandas as pd
-from multiprocessing import Process, Pipe, Event
 import time
 import os
 
-"""
-Keyboard and Mouse Event Handlers for Cognitive Modeling BCI System
-
-Provides classes for capturing keyboard and mouse events using pynput in separate processes.
-Each handler saves its log data directly to disk upon stopping.
-"""
-
-class Keyboard_Handler:
+class Keyboard_Handler(Handler):
     """
     Asynchronous keyboard event handler.
 
     Captures keyboard events in a separate process and saves them directly to disk.
     """
-    def __init__(self):
-        self.stop_event = Event()
-        self.process = None
-        self.active = False
-        self.parent_conn, self.child_conn  = Pipe() 
-
-    def trigger_listener(self, command, save_dir=None):
-        """
-        Start or stop the keyboard listener process.
-
-        Parameters:
-            command (str): 'start' to begin listening, 'stop' to end and save events.
-            save_dir (str, optional): Directory to save the log when stopping.
-        """
-        if command == 'start' and not self.active:
-            self.stop_event = Event()
-            self.process = Process(target=self._run_listener, args=(self.stop_event, self.child_conn), daemon=True)
-            self.process.start()
-            self.active = True
-
-        elif command == 'stop' and self.active:
-            self.stop_event.set()
-            self.parent_conn.send(save_dir)
-            self.process.join()
-            self.active = False
-
     def _run_listener(self, stop_event, pipe_conn):
         """
         Listen for keyboard events and store them locally. Save to disk upon stopping.
 
         Parameters:
             stop_event (multiprocessing.Event): Event to signal stopping.
+            pipe_conn (multiprocessing.Pipe): Pipe connection for communication.
 
         Returns:
             None
@@ -86,49 +54,38 @@ class Keyboard_Handler:
 
         # Save to CSV if directory provided
         save_dir = pipe_conn.recv()
+        self._save_log(log_data, save_dir, 'keyboard_log.csv')
+
+    def _save_log(self, log_data, save_dir, filename):
+        """
+        Save log data to a CSV file.
+
+        Parameters:
+            log_data (list): List of event data dictionaries.
+            save_dir (str): Directory to save the log file.
+            filename (str): Name of the log file.
+
+        Returns:
+            None
+        """
         if save_dir:
             df = pd.DataFrame(log_data)
             os.makedirs(save_dir, exist_ok=True)
-            df.to_csv(os.path.join(save_dir, 'keyboard_log.csv'), index=False)
+            df.to_csv(os.path.join(save_dir, filename), index=False)
 
-class Mouse_Handler:
+class Mouse_Handler(Handler):
     """
     Asynchronous mouse event handler.
 
     Captures mouse events in a separate process and saves them directly to disk.
     """
-    def __init__(self):
-        self.stop_event = Event()
-        self.process = None
-        self.active = False
-        self.parent_conn, self.child_conn  = Pipe()
-
-    def trigger_listener(self, command, save_dir=None):
-        """
-        Start or stop the mouse listener process.
-
-        Parameters:
-            command (str): 'start' to begin listening, 'stop' to end and save events.
-            save_dir (str, optional): Directory to save the log when stopping.
-        """
-        if command == 'start' and not self.active:
-            self.stop_event = Event()
-            self.process = Process(target=self._run_listener, args=(self.stop_event, self.child_conn), daemon=True)
-            self.process.start()
-            self.active = True
-
-        elif command == 'stop' and self.active:
-            self.stop_event.set()
-            self.parent_conn.send(save_dir)
-            self.process.join()
-            self.active = False
-
     def _run_listener(self, stop_event, pipe_conn):
         """
         Listen for mouse events and store them locally. Save to disk upon stopping.
 
         Parameters:
             stop_event (multiprocessing.Event): Event to signal stopping.
+            pipe_conn (multiprocessing.Pipe): Pipe connection for communication.
 
         Returns:
             None
@@ -171,7 +128,21 @@ class Mouse_Handler:
 
         # Save to CSV if directory provided
         save_dir = pipe_conn.recv()
+        self._save_log(log_data, save_dir, 'mouse_log.csv')
+
+    def _save_log(self, log_data, save_dir, filename):
+        """
+        Save log data to a CSV file.
+
+        Parameters:
+            log_data (list): List of event data dictionaries.
+            save_dir (str): Directory to save the log file.
+            filename (str): Name of the log file.
+
+        Returns:
+            None
+        """
         if save_dir:
             df = pd.DataFrame(log_data)
             os.makedirs(save_dir, exist_ok=True)
-            df.to_csv(os.path.join(save_dir, 'mouse_log.csv'), index=False)
+            df.to_csv(os.path.join(save_dir, filename), index=False)

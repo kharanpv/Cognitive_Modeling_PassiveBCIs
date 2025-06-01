@@ -10,9 +10,9 @@ from .Recorders.Webcam_Handler import Webcam_Handler
 import datetime
 
 class Central_Data_Controller:
-    def __init__(self):
-        self.screen_handler = Screen_Handler()
-        # self.webcam_handler = Webcam_Handler()
+    def __init__(self, update_status_callback=None):
+        self.screen_handler = Screen_Handler(update_status_callback)
+        self.webcam_handler = Webcam_Handler()
         self.keyboard_handler = Keyboard_Handler()
         self.mouse_handler = Mouse_Handler()
 
@@ -31,6 +31,9 @@ class Central_Data_Controller:
 
         if 's' in self.active_handlers:
             self.screen_handler.trigger_listener('start')
+        
+        if 'w' in self.active_handlers:
+            self.webcam_handler.trigger_listener('start')
 
     def stop_recording(self, recording_location):
         self.latest_stop_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
@@ -50,3 +53,7 @@ class Central_Data_Controller:
         if 's' in self.active_handlers:
             self.screen_handler.trigger_listener('stop', recording_folder)
             self.active_handlers.remove('s')
+        
+        if 'w' in self.active_handlers:
+            self.webcam_handler.trigger_listener('stop', recording_folder)
+            self.active_handlers.remove('w')

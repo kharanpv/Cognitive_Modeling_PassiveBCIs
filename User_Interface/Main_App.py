@@ -192,8 +192,8 @@ class AppUI:
             recording_modes_selected = True
 
         if self.record_webcam_var.get():
-            # Webcam checkbox is a dummy, don't count as selected mode
-            pass
+            self.central_data_controller.active_handlers.append('w')
+            recording_modes_selected = True
 
         if not recording_modes_selected:
             self._update_status("No recording modes selected", "red")

@@ -9,11 +9,12 @@ from .Handler import Handler
 
 
 class Screen_Handler(Handler):
-    def __init__(self):
+    def __init__(self, update_status_callback=None):
         super().__init__()
         self.resolution = (1280, 720)
         self.fps = 24
         self.codec = cv2.VideoWriter_fourcc(*"XVID")
+        self.update_status_callback = update_status_callback  # Callback to update the status box
 
     def _run_listener(self, stop_event, pipe_conn):
         try:
@@ -27,7 +28,6 @@ class Screen_Handler(Handler):
                     if not output.isOpened():
                         return
 
-                    frame_count = 0
                     while not stop_event.is_set():
                         try:
                             sct_img = sct.grab(monitor)
@@ -41,16 +41,13 @@ class Screen_Handler(Handler):
                             cursor_radius = 5
                             cv2.circle(resized_frame, (x, y), cursor_radius, cursor_color, -1)
 
-                            # Save individual frames for debugging
-                            debug_frame_path = os.path.join(temp_dir, f"debug_frame_{frame_count}.jpg")
-                            cv2.imwrite(debug_frame_path, resized_frame)
-
                             output.write(resized_frame)
                             if not output.isOpened():
                                 break
-                            frame_count += 1
+                            
                         except Exception as e:
-                            pass
+                            if self.update_status_callback:
+                                self.update_status_callback(f"Error during frame processing: {e}", "red")
 
                     output.release()
                 
@@ -61,8 +58,10 @@ class Screen_Handler(Handler):
                 try:
                     shutil.move(temp_path, save_location)
                 except Exception as e:
-                    pass
+                    if self.update_status_callback:
+                        self.update_status_callback(f"Error while moving video file: {e}", "red")
         except Exception as e:
-            pass
+            if self.update_status_callback:
+                self.update_status_callback(f"Critical error in _run_listener: {e}", "red")
 
 

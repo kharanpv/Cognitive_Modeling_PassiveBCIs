@@ -10,8 +10,8 @@ from .Recorders.Webcam_Handler import Webcam_Handler
 import datetime
 
 class Central_Data_Controller:
-    def __init__(self, update_status_callback=None):
-        self.screen_handler = Screen_Handler(update_status_callback)
+    def __init__(self):
+        self.screen_handler = Screen_Handler()
         self.webcam_handler = Webcam_Handler()
         self.keyboard_handler = Keyboard_Handler()
         self.mouse_handler = Mouse_Handler()

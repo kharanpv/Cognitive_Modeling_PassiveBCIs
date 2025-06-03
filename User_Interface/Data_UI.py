@@ -48,6 +48,9 @@ class DataUI:
         self.status_text = tk.Label(status_frame, text="Ready", anchor='w', fg="green")
         self.status_text.pack(side='left', padx=5)
     
+    def _update_status(self, message, color="black"):
+        self.status_text.config(text=message, fg=color)
+    
     def _setup_checkboxes(self):
         checkbox_frame = tk.Frame(self.parent_frame, padx=20, pady=10)
         checkbox_frame.pack(side='top', fill='x')
@@ -109,9 +112,6 @@ class DataUI:
         play_icon.grid(row=0, column=0, padx=20, sticky='n')
         stop_icon.grid(row=0, column=1, padx=20, sticky='n')
     
-    def _update_status(self, message, color="black"):
-        self.status_text.config(text=message, fg=color)
-    
     def _choose_location(self):
         directory = filedialog.askdirectory(initialdir=self.app.default_data_dir)
         if directory:
@@ -125,10 +125,13 @@ class DataUI:
                 os.startfile(location)
             elif os.name == 'posix':
                 import subprocess
+                import sys
                 subprocess.call(['open', location] if sys.platform == 'darwin' else ['xdg-open', location])
     
     def _start_recording(self):
         recording_modes_selected = False
+        
+        # Clear any previous handlers to avoid duplicates
         self.app.central_data_controller.active_handlers = []
         
         if self.record_keyboard_var.get():
@@ -153,10 +156,12 @@ class DataUI:
 
         try:
             self._update_status("Starting recording...", "orange")
-            self.parent_frame.update()
+            self.parent_frame.update()  # Force UI update
             
             self.app.central_data_controller.start_recording()
             self._update_status("Recording Started", "blue")
+            
+            # Start the timer
             self._start_timer()
             
         except Exception as e:
@@ -167,6 +172,8 @@ class DataUI:
         if len(self.app.central_data_controller.active_handlers) > 0:
             self.app.central_data_controller.stop_recording(self.location_entry.get())
             self._update_status("Recording Ended", "green")
+            
+            # Stop the timer
             self._stop_timer()
         else:
             self._update_status("No recording was in progress", "orange")
@@ -175,7 +182,7 @@ class DataUI:
     def _start_timer(self):
         self.recording_start_time = time.time()
         self.recording_timer_label.config(text="Recording for: 00:00:00", fg="gray")
-        self.recording_timer_label.pack(after=self.status_text)
+        self.recording_timer_label.pack(after=self.status_text.master)
         self._update_timer()
 
     def _update_timer(self):

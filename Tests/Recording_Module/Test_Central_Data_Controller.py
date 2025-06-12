@@ -14,16 +14,15 @@ def controller():
 
 
 def test_init(controller):
-    controller.central_data_controller = Central_Data_Controller()
-    
-    assert isinstance(controller.central_data_controller.screen_handler, Screen_Handler)
-    assert isinstance(controller.central_data_controller.webcam_handler, Webcam_Handler)
-    assert isinstance(controller.central_data_controller.keyboard_handler, Keyboard_Handler)
-    assert isinstance(controller.central_data_controller.mouse_handler, Mouse_Handler)
 
-    assert len(controller.central_data_controller.active_handlers) == 0
-    assert isinstance(controller.central_data_controller.latest_start_time, str)
-    assert isinstance(controller.central_data_controller.latest_stop_time, str)
+    assert isinstance(controller.screen_handler, Screen_Handler)
+    assert isinstance(controller.webcam_handler, Webcam_Handler)
+    assert isinstance(controller.keyboard_handler, Keyboard_Handler)
+    assert isinstance(controller.mouse_handler, Mouse_Handler)
+
+    assert len(controller.active_handlers) == 0
+    assert isinstance(controller.latest_start_time, str)
+    assert isinstance(controller.latest_stop_time, str)
 
 
 @patch('Recording_Module.Central_Data_Controller.Webcam_Handler.trigger_listener')

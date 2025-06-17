@@ -5,14 +5,14 @@ from unittest.mock import patch, MagicMock
 
 from Recording_Module.Recorders.Handler import Handler
 
-class DummyHandler(Handler):
+class Dummy_Handler(Handler):
     def _run_listener(self, stop_event, pipe_conn):
         return 'Dummy Method'
 
 
 @pytest.fixture
 def handler():
-    return DummyHandler()
+    return Dummy_Handler()
 
 
 def test_init(handler):

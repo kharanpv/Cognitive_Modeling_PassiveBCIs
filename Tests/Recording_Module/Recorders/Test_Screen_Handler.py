@@ -1,5 +1,4 @@
-import pytest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 from Recording_Module.Recorders.Screen_Handler import Screen_Handler
 
 
@@ -33,21 +32,18 @@ def test_screen_handler_run_listener(
     mock_makedirs,
     mock_move
 ):
-    # Arrange
     handler = Screen_Handler(update_status_callback=MagicMock())
 
     stop_event = MagicMock()
-    stop_event.is_set.side_effect = [False, True]  # Run loop once
+    stop_event.is_set.side_effect = [False, True]
 
     pipe_conn = MagicMock()
     pipe_conn.recv.return_value = '/dummy_location'
 
-    # Fake tempdir context manager
     mock_tempdir_instance = MagicMock()
     mock_tempdir_instance.__enter__.return_value = '/tmp/dir'
     mock_tempdir.return_value = mock_tempdir_instance
 
-    # Fake mss screen capture
     mock_sct = MagicMock()
     mock_sct.monitors = [{'width': 1920, 'height': 1080}]
     mock_sct.grab.return_value = MagicMock()
@@ -55,22 +51,18 @@ def test_screen_handler_run_listener(
     mock_mss_instance.__enter__.return_value = mock_sct
     mock_mss.return_value = mock_mss_instance
 
-    # Mock intermediate OpenCV transformations
     mock_frame = MagicMock()
     mock_cvtcolor.return_value = mock_frame
     mock_resize.return_value = mock_frame
     mock_position.return_value = (100, 100)
-    mock_circle.return_value = None  # Not strictly needed, but good form
+    mock_circle.return_value = None 
 
-    # Fake video writer
     mock_writer = MagicMock()
     mock_writer.isOpened.return_value = True
     mock_videowriter_class.return_value = mock_writer
 
-    # Act
     handler._run_listener(stop_event, pipe_conn)
 
-    # Assert
     mock_tempdir.assert_called_once()
     mock_mss.assert_called_once()
     mock_videowriter_class.assert_called_once()

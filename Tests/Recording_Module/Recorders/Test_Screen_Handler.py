@@ -7,7 +7,7 @@ def test_screen_handler_init():
     handler = Screen_Handler(update_status_callback=mock_callback)
 
     assert handler.resolution == (1280, 720)
-    assert handler.fps == 24
+    assert handler.fps == 28.8
     assert isinstance(handler.codec, int)
     assert handler.update_status_callback == mock_callback
 

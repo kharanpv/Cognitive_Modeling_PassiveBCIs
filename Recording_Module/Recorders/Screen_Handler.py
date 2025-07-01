@@ -12,7 +12,7 @@ class Screen_Handler(Handler):
     def __init__(self, update_status_callback=None):
         super().__init__()
         self.resolution = (1280, 720)
-        self.fps = 24
+        self.fps = 13
         self.codec = cv2.VideoWriter_fourcc(*"XVID")
         self.update_status_callback = update_status_callback  # Callback to update the status box
 
@@ -30,8 +30,7 @@ class Screen_Handler(Handler):
 
                     while not stop_event.is_set():
                         try:
-                            sct_img = sct.grab(monitor)
-                            frame = np.array(sct_img)
+                            frame = np.array(sct.grab(monitor))
                             frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
                             resized_frame = cv2.resize(frame, self.resolution, interpolation=cv2.INTER_AREA)
 

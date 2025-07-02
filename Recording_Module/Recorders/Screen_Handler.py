@@ -1,4 +1,5 @@
 from mss import mss
+import ctypes
 import cv2
 import numpy as np
 import os
@@ -22,7 +23,18 @@ class Screen_Handler(Handler):
                 temp_path = os.path.join(temp_dir, 'screen_capture.avi')
 
                 with mss() as sct:
-                    monitor = sct.monitors[0]  # Full screen
+                    if os.name == 'nt':
+                        user32 = ctypes.windll.user32 
+                        screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+                        monitor = {
+                            "left": 0,
+                            "top": 0,
+                            "width": screensize[0],
+                            "height": screensize[1],
+                        }
+                        
+                    else:
+                        monitor = sct.monitors[0]  # Full screen
 
                     output = cv2.VideoWriter(temp_path, self.codec, self.fps, self.resolution)
                     if not output.isOpened():

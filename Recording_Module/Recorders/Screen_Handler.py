@@ -6,6 +6,7 @@ import os
 import tempfile
 import shutil
 import pyautogui
+import time
 from .Handler import Handler
 
 
@@ -13,7 +14,7 @@ class Screen_Handler(Handler):
     def __init__(self, update_status_callback=None):
         super().__init__()
         self.resolution = (1280, 720)
-        self.fps = 13
+        self.fps = 28.8
         self.codec = cv2.VideoWriter_fourcc(*"XVID")
         self.update_status_callback = update_status_callback  # Callback to update the status box
 
@@ -42,6 +43,8 @@ class Screen_Handler(Handler):
 
                     while not stop_event.is_set():
                         try:
+                            start = time.time()
+                            
                             frame = np.array(sct.grab(monitor))
                             frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
                             resized_frame = cv2.resize(frame, self.resolution, interpolation=cv2.INTER_AREA)
@@ -53,6 +56,12 @@ class Screen_Handler(Handler):
                             cv2.circle(resized_frame, (x, y), cursor_radius, cursor_color, -1)
 
                             output.write(resized_frame)
+                            
+                            # Frame synchronization
+                            elapsed = time.time() - start
+                            time_to_sleep = max(0, 1/self.fps - elapsed)
+                            time.sleep(time_to_sleep)
+                            
                             if not output.isOpened():
                                 break
                             

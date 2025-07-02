@@ -7,7 +7,7 @@ from .Handler import Handler
 class Webcam_Handler(Handler):
     def __init__(self, update_status_callback=None):
         super().__init__()
-        self.fps = 24
+        self.fps = 28.8
         self.codec = cv2.VideoWriter_fourcc(*"XVID")
         self.resolution = tuple()
         self.update_status_callback = update_status_callback  # Callback to update the status box

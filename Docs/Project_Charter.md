@@ -61,6 +61,10 @@ A cognitive architecture can be defined as the **framework for the functioning o
 4. **Cognitive Validity**  
    This is really the bottom line. The architecture must be backed by some empirical findings or observations. Pure theorization is fun, but then I’d be taking shots in the dark. Bonus points if one of those empirical findings is BCI data.
 
+#### Books
+
+Books that will be read are _"How can the Human Mind occur in the Physical Universe"_ by John R. Anderson (founder of ACT-R) and "_Cognitive Modeling_" by Polk and Seifert. They are meant to give an introduction to cognitive architectures.
+
 #### Candidate Cognitive Architectures
 
 The following were identified as cognitive architectures that seem usable at first glance. Any additional comments are not meant to show preference but simply outline something noteworthy:
@@ -69,7 +73,7 @@ The following were identified as cognitive architectures that seem usable at fir
 
 2. **LIDA** – Found at [https://ccrg.cs.memphis.edu/](https://ccrg.cs.memphis.edu/). This one attempts to incorporate the Global Workspace Theory of Consciousness.
 
-3. **ACT-R** – Seems to be the most comprehensive and popular model to exist. *(Website down as of 05/17/2025)*
+3. **ACT-R** – Seems to be the most comprehensive and popular model to exist. [Website Link](http://act-r.psy.cmu.edu/)
 
 4. **CLARION** – [Project Page](https://sites.google.com/site/drronsun/clarion/clarion-project)
 
@@ -201,6 +205,18 @@ The best course of action, I hypothesize, will be to model each measured trait�
 Then, some sort of **meta-framework** will wrap all these characteristics neatly into one package. The architecture, then, becomes both:
 - How individual traits are modeled
 - How each of these sub-architectures come together
+
+#### **Current Thoughts**
+
+The cognitive architecture, then, will look as follows:
+- Sub-analyses modeled with deep neural-network based machine learning.
+- Rules, laws, algorithms, and theories to compute the relationship between these different problems, inspired by existing cognitive architectures.
+
+My cognitive architecture will be inspired largely by **LIDA** and **ACT-R**. Psi-Theory, while enticing, lacks computational rigor at first glance, therefore I will not proceed with it, unless I find something noticeably lacking in LIDA and ACT-R, in which case I may revisit. 
+
+**Points from ACT-R**
+
+I choose to derive inspiration from ACT-R first because it is the older and more established of the two candidates. ACT-R provides a distinction between _procedural_ and _declarative_ memory. I think this is useful, and some means to exemplify this in my model will be desired, either by my own imagining or by ACT-R software library.
 
 ---
 

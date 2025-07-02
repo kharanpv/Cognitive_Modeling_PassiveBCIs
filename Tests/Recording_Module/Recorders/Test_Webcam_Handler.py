@@ -6,7 +6,7 @@ def test_webcam_handler_init():
     mock_callback = MagicMock()
     handler = Webcam_Handler(update_status_callback=mock_callback)
 
-    assert handler.fps == 24
+    assert handler.fps == 28.8
     assert handler.codec == cv2.VideoWriter_fourcc(*"XVID")
     assert isinstance(handler.resolution, tuple)
     assert handler.update_status_callback == mock_callback

@@ -7,6 +7,7 @@ import tempfile
 import shutil
 import pyautogui
 import time
+import subprocess
 from .Handler import Handler
 
 
@@ -41,14 +42,16 @@ class Screen_Handler(Handler):
                     if not output.isOpened():
                         return
 
+                    start_time = time.time()
+                    frame_count = 0
+                    
                     while not stop_event.is_set():
                         try:
-                            start = time.time()
-                            
                             frame = np.array(sct.grab(monitor))
                             frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
                             resized_frame = cv2.resize(frame, self.resolution, interpolation=cv2.INTER_AREA)
-
+                            frame_count += 1
+                            
                             # Draw the mouse cursor onto the frame
                             x, y = pyautogui.position()
                             cursor_color = (0, 0, 255)  # Red dot
@@ -56,11 +59,6 @@ class Screen_Handler(Handler):
                             cv2.circle(resized_frame, (x, y), cursor_radius, cursor_color, -1)
 
                             output.write(resized_frame)
-                            
-                            # Frame synchronization
-                            elapsed = time.time() - start
-                            time_to_sleep = max(0, 1/self.fps - elapsed)
-                            time.sleep(time_to_sleep)
                             
                             if not output.isOpened():
                                 break
@@ -70,13 +68,31 @@ class Screen_Handler(Handler):
                                 self.update_status_callback(f"Error during frame processing: {e}", "red")
 
                     output.release()
+                    
+                    # Matching length of recorded video with desired 28.8 fps
+                    end_time = time.time()
+                    duration = end_time - start_time
+                    nominal_duration = frame_count / self.fps
+                    stretch_factor = duration / nominal_duration
+                    adjusted_capture_path = os.path.join(temp_dir, '_screen_capture.avi')
+                    
+                    cmd = [
+                        "ffmpeg",
+                        "-i", temp_path,
+                        "-filter:v", f"setpts={stretch_factor:.6f}*PTS",
+                        "-c:v", "libxvid",               # assuming Xvid
+                        "-b:v", "3200k",                 # match original bitrate
+                        "-y",                            # overwrite
+                        adjusted_capture_path
+                    ]
+                    subprocess.run(cmd, check=True)
                 
                 save_dir = pipe_conn.recv()
                 os.makedirs(save_dir, exist_ok=True)
                 save_location = os.path.join(save_dir, 'screen_capture.avi')
 
                 try:
-                    shutil.move(temp_path, save_location)
+                    shutil.move(adjusted_capture_path, save_location)
                 except Exception as e:
                     if self.update_status_callback:
                         self.update_status_callback(f"Error while moving video file: {e}", "red")

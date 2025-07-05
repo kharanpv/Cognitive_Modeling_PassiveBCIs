@@ -5,7 +5,27 @@ import sys
 import time
 
 class DataUI:
+    """
+    A graphical user interface class for managing data recording operations.
+    
+    This class provides a complete UI for controlling various recording options including:
+    - Keyboard input recording
+    - Mouse movement recording
+    - Screen recording
+    - Webcam recording
+    
+    It also handles recording timer display, storage location management,
+    and status updates for the recording process.
+    """
+
     def __init__(self, parent_frame, app_instance):
+        """
+        Initialize the Data UI components.
+
+        Args:
+            parent_frame: The tkinter frame where this UI will be embedded
+            app_instance: Reference to the main application instance
+        """
         self.parent_frame = parent_frame
         self.app = app_instance
         
@@ -23,6 +43,10 @@ class DataUI:
         self._setup_ui()
 
     def _setup_ui(self):
+        """
+        Set up the main UI components including status box, title,
+        checkboxes, location selection, and recording controls.
+        """
         self._setup_status_box()
         
         title_frame = tk.Frame(self.parent_frame)
@@ -39,6 +63,10 @@ class DataUI:
         self._setup_recording_controls()
     
     def _setup_status_box(self):
+        """
+        Create and configure the status display box that shows current
+        program state and recording status.
+        """
         status_frame = tk.Frame(self.parent_frame, padx=20, pady=10)
         status_frame.pack(side='top', fill='x')
         
@@ -49,9 +77,20 @@ class DataUI:
         self.status_text.pack(side='left', padx=5)
     
     def _update_status(self, message, color="black"):
+        """
+        Update the status message display.
+
+        Args:
+            message (str): Status message to display
+            color (str): Color of the status text (default: "black")
+        """
         self.status_text.config(text=message, fg=color)
     
     def _setup_checkboxes(self):
+        """
+        Create checkboxes for selecting different recording modes:
+        keyboard, mouse, screen, and webcam.
+        """
         checkbox_frame = tk.Frame(self.parent_frame, padx=20, pady=10)
         checkbox_frame.pack(side='top', fill='x')
         
@@ -65,6 +104,10 @@ class DataUI:
                    variable=self.record_webcam_var).pack(anchor='w', pady=5)
     
     def _setup_location_selection(self):
+        """
+        Create UI elements for selecting and managing the data storage location.
+        Includes entry field, browse button, and open location button.
+        """
         location_frame = tk.Frame(self.parent_frame, padx=20, pady=10)
         location_frame.pack(side='top', fill='x')
         
@@ -85,6 +128,10 @@ class DataUI:
         open_button.pack(anchor='w', pady=5)
     
     def _setup_recording_controls(self):
+        """
+        Set up the recording control buttons and icons.
+        Includes start and stop recording buttons with corresponding icons.
+        """
         controls_frame = tk.Frame(self.parent_frame, padx=20, pady=20)
         controls_frame.pack(side='bottom', fill='x', pady=20)
         
@@ -113,12 +160,20 @@ class DataUI:
         stop_icon.grid(row=0, column=1, padx=20, sticky='n')
     
     def _choose_location(self):
+        """
+        Open a directory selection dialog and update the location entry
+        with the selected path.
+        """
         directory = filedialog.askdirectory(initialdir=self.app.default_data_dir)
         if directory:
             self.location_entry.delete(0, tk.END)
             self.location_entry.insert(0, directory)
     
     def _open_location(self):
+        """
+        Open the current storage location in the system's file explorer.
+        Handles different operating systems (Windows, macOS, Linux).
+        """
         location = self.location_entry.get()
         if os.path.exists(location):
             if os.name == 'nt':
@@ -129,6 +184,14 @@ class DataUI:
                 subprocess.call(['open', location] if sys.platform == 'darwin' else ['xdg-open', location])
     
     def _start_recording(self):
+        """
+        Start the recording process based on selected modes.
+        
+        - Validates that at least one recording mode is selected
+        - Initializes the central data controller with selected modes
+        - Updates UI status and starts the recording timer
+        - Handles any errors during the recording start process
+        """
         recording_modes_selected = False
         
         # Clear any previous handlers to avoid duplicates
@@ -169,23 +232,38 @@ class DataUI:
             print(f"Error in start_recording: {e}")
     
     def _end_recording(self):
+        """
+        Stop all active recordings and save the recorded data.
+        Updates the UI status and stops the recording timer.
+        """
         if len(self.app.central_data_controller.active_handlers) > 0:
             self.app.central_data_controller.stop_recording(self.location_entry.get())
-            self._update_status("Recording Ended", "green")
             
             # Stop the timer
             self._stop_timer()
+            
+            self._update_status("Processing recordings", "yellow")
+            self.app.central_data_controller.process_recordings()
+            self._update_status("Recording Ended", "green")
+
         else:
             self._update_status("No recording was in progress", "orange")
     
-    # Timer methods
     def _start_timer(self):
+        """
+        Initialize and start the recording duration timer.
+        Displays time in HH:MM:SS format.
+        """
         self.recording_start_time = time.time()
         self.recording_timer_label.config(text="Recording for: 00:00:00", fg="gray")
         self.recording_timer_label.pack(after=self.status_text.master)
         self._update_timer()
 
     def _update_timer(self):
+        """
+        Update the timer display every second while recording.
+        Formats time as HH:MM:SS and schedules the next update.
+        """
         if self.recording_start_time is None:
             return
         elapsed = int(time.time() - self.recording_start_time)
@@ -196,6 +274,10 @@ class DataUI:
         self.recording_timer_job = self.parent_frame.after(1000, self._update_timer)
 
     def _stop_timer(self):
+        """
+        Stop the recording timer and display the final duration.
+        Cancels the timer update job and updates the timer label.
+        """
         if self.recording_timer_job:
             self.parent_frame.after_cancel(self.recording_timer_job)
             self.recording_timer_job = None

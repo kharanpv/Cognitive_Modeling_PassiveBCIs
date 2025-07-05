@@ -12,7 +12,28 @@ from .Handler import Handler
 
 
 class Screen_Handler(Handler):
+    """
+    Handler for recording screen content with cursor visualization.
+    
+    Records the user's screen at a specified resolution and frame rate,
+    while also capturing and drawing the mouse cursor position on each frame.
+    The recording is temporarily stored and then moved to a permanent location
+    when recording stops.
+    
+    Attributes:
+        resolution (tuple): Target resolution for the video (width, height)
+        fps (float): Frames per second for recording
+        codec (int): Video codec for encoding (default: XVID)
+        update_status_callback (callable): Optional callback for status updates
+    """
+
     def __init__(self, update_status_callback=None):
+        """
+        Initialize the screen recording handler.
+        
+        Args:
+            update_status_callback (callable, optional): Function to call for status updates
+        """
         super().__init__()
         self.resolution = (1280, 720)
         self.fps = 28.8
@@ -20,6 +41,16 @@ class Screen_Handler(Handler):
         self.update_status_callback = update_status_callback  # Callback to update the status box
 
     def _run_listener(self, stop_event, pipe_conn):
+        """
+        Record the screen until stopped.
+        
+        Captures the screen content, resizes it to the target resolution,
+        draws the cursor position, and saves frames to a video file.
+        
+        Args:
+            stop_event (Event): Multiprocessing event to signal stopping
+            pipe_conn (Connection): Pipe connection for receiving save location
+        """
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_path = os.path.join(temp_dir, 'screen_capture.avi')
@@ -68,34 +99,17 @@ class Screen_Handler(Handler):
                                 self.update_status_callback(f"Error during frame processing: {e}", "red")
 
                     output.release()
-                    
-                    # Matching length of recorded video with desired 28.8 fps
-                    end_time = time.time()
-                    duration = end_time - start_time
-                    nominal_duration = frame_count / self.fps
-                    stretch_factor = duration / nominal_duration
-                    adjusted_capture_path = os.path.join(temp_dir, '_screen_capture.avi')
-                    
-                    cmd = [
-                        "ffmpeg",
-                        "-i", temp_path,
-                        "-filter:v", f"setpts={stretch_factor:.6f}*PTS",
-                        "-c:v", "libxvid",               # assuming Xvid
-                        "-b:v", "3200k",                 # match original bitrate
-                        "-y",                            # overwrite
-                        adjusted_capture_path
-                    ]
-                    subprocess.run(cmd, check=True)
                 
                 save_dir = pipe_conn.recv()
                 os.makedirs(save_dir, exist_ok=True)
                 save_location = os.path.join(save_dir, 'screen_capture.avi')
 
                 try:
-                    shutil.move(adjusted_capture_path, save_location)
+                    shutil.move(temp_path, save_location)
                 except Exception as e:
                     if self.update_status_callback:
                         self.update_status_callback(f"Error while moving video file: {e}", "red")
+                        
         except Exception as e:
             if self.update_status_callback:
                 self.update_status_callback(f"Critical error in _run_listener: {e}", "red")

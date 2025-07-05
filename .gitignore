@@ -15,3 +15,6 @@ Data/
 
 # Allow specific subfolder inside Data
 !Data/Utilities/
+
+# Ignore DS_Store
+.DS_Store/

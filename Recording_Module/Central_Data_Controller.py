@@ -130,7 +130,9 @@ class Central_Data_Controller:
             Currently only processes screen recordings, other data streams
             may be added in future versions.
         """
-        # Post-process recordings (currently only screen data)
+        # Post-process recordings
+        
+        # Screen capture
         screen_recording_filepath = os.path.join(self.recording_folder, 'screen_capture.avi')
         actual_duration = float(
             subprocess.run(["ffprobe", "-v", "error", "-show_entries",
@@ -145,17 +147,47 @@ class Central_Data_Controller:
         nominal_duration = (latest_stop_time - latest_start_time).seconds
 
         stretch_factor = nominal_duration / actual_duration
-        adjusted_capture_path = os.path.join(self.recording_folder, '_screen_capture.avi')
         
-        cmd = [
-            "ffmpeg",
-            "-i", screen_recording_filepath,
-            "-filter:v", f"setpts={stretch_factor:.6f}*PTS",
-            "-c:v", "libxvid",               # assuming Xvid
-            "-b:v", "3200k",                 # match original bitrate
-            "-y",                            # overwrite
-            adjusted_capture_path
-        ]
-        subprocess.run(cmd, check=True)
-        os.replace(adjusted_capture_path, screen_recording_filepath)
+        if stretch_factor > 1.01 or stretch_factor < 0.99:
+            adjusted_capture_path = os.path.join(self.recording_folder, '_screen_capture.avi')
+            
+            cmd = [
+                "ffmpeg",
+                "-i", screen_recording_filepath,
+                "-filter:v", f"setpts={stretch_factor:.6f}*PTS",
+                "-c:v", "libxvid",               # assuming Xvid
+                "-b:v", "3200k",                 # match original bitrate
+                "-y",                            # overwrite
+                adjusted_capture_path
+            ]
+            subprocess.run(cmd, check=True)
+            os.replace(adjusted_capture_path, screen_recording_filepath)
 
+        # Webcam Capture
+        screen_recording_filepath = os.path.join(self.recording_folder, 'webcam_capture.avi')
+        actual_duration = float(
+            subprocess.run(["ffprobe", "-v", "error", "-show_entries",
+                            "format=duration", "-of",
+                            "default=noprint_wrappers=1:nokey=1", screen_recording_filepath],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT).stdout
+        )
+    
+        nominal_duration = (latest_stop_time - latest_start_time).seconds
+
+        stretch_factor = nominal_duration / actual_duration
+        
+        if stretch_factor > 1.01 or stretch_factor < 0.99:
+            adjusted_capture_path = os.path.join(self.recording_folder, '_webcam_capture.avi')
+            
+            cmd = [
+                "ffmpeg",
+                "-i", screen_recording_filepath,
+                "-filter:v", f"setpts={stretch_factor:.6f}*PTS",
+                "-c:v", "libxvid",               # assuming Xvid
+                "-b:v", "3200k",                 # match original bitrate
+                "-y",                            # overwrite
+                adjusted_capture_path
+            ]
+            subprocess.run(cmd, check=True)
+            os.replace(adjusted_capture_path, screen_recording_filepath)

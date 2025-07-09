@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+from multiprocessing import Process, Pipe, Event
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -9,6 +10,21 @@ from .Recorders.Screen_Handler import Screen_Handler
 from .Recorders.Webcam_Handler import Webcam_Handler
 
 import datetime
+
+def process_recordings(recording_folder, filename, screen_recording_filepath, stretch_factor):
+    adjusted_capture_path = os.path.join(recording_folder, f'_{filename}')
+    
+    cmd = [
+        "ffmpeg",
+        "-i", screen_recording_filepath,
+        "-filter:v", f"setpts={stretch_factor:.6f}*PTS",
+        "-c:v", "libxvid",               # assuming Xvid
+        "-b:v", "3200k",                 # match original bitrate
+        "-y",                            # overwrite
+        adjusted_capture_path
+    ]
+    subprocess.run(cmd, check=True)
+    os.replace(adjusted_capture_path, screen_recording_filepath)
 
 class Central_Data_Controller:
     """
@@ -111,25 +127,9 @@ class Central_Data_Controller:
             self.webcam_handler.trigger_listener('stop', self.recording_folder)
             self.active_handlers.remove('w')
 
-
-    def process_recordings(self):
-        """
-        Post-process recorded data to ensure synchronization and quality.
-        
-        Currently handles screen recording synchronization:
-        1. Determines actual duration of the screen recording using ffprobe
-        2. Calculates the nominal duration from start/stop timestamps
-        3. Adjusts video playback speed to match the nominal duration
-        4. Reencodes the video using Xvid codec at 3200k bitrate
-        
-        This ensures that the screen recording matches the actual timeline
-        of other recorded data streams.
-        
-        Note:
-            Requires ffmpeg and ffprobe to be installed on the system.
-            Currently only processes screen recordings, other data streams
-            may be added in future versions.
-        """
+    def _process_recordings(self):
+        screen_process = None
+        webcam_process = None
         # Post-process recordings
         
         # Screen capture
@@ -149,20 +149,14 @@ class Central_Data_Controller:
         stretch_factor = nominal_duration / actual_duration
         
         if stretch_factor > 1.01 or stretch_factor < 0.99:
-            adjusted_capture_path = os.path.join(self.recording_folder, '_screen_capture.avi')
+            screen_process = Process(target=process_recordings, args=(
+                self.recording_folder, 
+                'screen_capture.avi', 
+                screen_recording_filepath, 
+                stretch_factor
+                ), daemon=True)
+            screen_process.start()
             
-            cmd = [
-                "ffmpeg",
-                "-i", screen_recording_filepath,
-                "-filter:v", f"setpts={stretch_factor:.6f}*PTS",
-                "-c:v", "libxvid",               # assuming Xvid
-                "-b:v", "3200k",                 # match original bitrate
-                "-y",                            # overwrite
-                adjusted_capture_path
-            ]
-            subprocess.run(cmd, check=True)
-            os.replace(adjusted_capture_path, screen_recording_filepath)
-
         # Webcam Capture
         screen_recording_filepath = os.path.join(self.recording_folder, 'webcam_capture.avi')
         actual_duration = float(
@@ -178,16 +172,16 @@ class Central_Data_Controller:
         stretch_factor = nominal_duration / actual_duration
         
         if stretch_factor > 1.01 or stretch_factor < 0.99:
-            adjusted_capture_path = os.path.join(self.recording_folder, '_webcam_capture.avi')
-            
-            cmd = [
-                "ffmpeg",
-                "-i", screen_recording_filepath,
-                "-filter:v", f"setpts={stretch_factor:.6f}*PTS",
-                "-c:v", "libxvid",               # assuming Xvid
-                "-b:v", "3200k",                 # match original bitrate
-                "-y",                            # overwrite
-                adjusted_capture_path
-            ]
-            subprocess.run(cmd, check=True)
-            os.replace(adjusted_capture_path, screen_recording_filepath)
+            webcam_process = Process(target=process_recordings, args=(
+                self.recording_folder, 
+                'webcam_capture.avi', 
+                screen_recording_filepath, 
+                stretch_factor
+                ), daemon=True)
+            webcam_process.start()
+
+        if screen_process:
+            screen_process.join()
+        
+        if webcam_process:
+            webcam_process.join()

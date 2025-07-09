@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import Checkbutton, BooleanVar, filedialog
 import os
-import sys
 import time
+import threading
 
 class DataUI:
     """
@@ -243,12 +243,20 @@ class DataUI:
             self._stop_timer()
             
             self._update_status("Processing recordings", "yellow")
-            self.app.central_data_controller.process_recordings()
-            self._update_status("Recording Ended", "green")
+
+            # Start processing in a background thread
+            threading.Thread(
+                target=self._run_post_processing_thread,
+                daemon=True
+            ).start()
 
         else:
             self._update_status("No recording was in progress", "orange")
     
+    def _run_post_processing_thread(self):
+        self.app.central_data_controller._process_recordings()
+        self.parent_frame.after(0, lambda: self._update_status("Recording Ended", "green"))
+
     def _start_timer(self):
         """
         Initialize and start the recording duration timer.

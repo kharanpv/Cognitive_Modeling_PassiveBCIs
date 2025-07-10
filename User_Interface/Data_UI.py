@@ -237,12 +237,11 @@ class DataUI:
         Updates the UI status and stops the recording timer.
         """
         if len(self.app.central_data_controller.active_handlers) > 0:
+            self._update_status("Processing recordings", "yellow")
             self.app.central_data_controller.stop_recording(self.location_entry.get())
             
             # Stop the timer
             self._stop_timer()
-            
-            self._update_status("Processing recordings", "yellow")
 
             # Start processing in a background thread
             threading.Thread(

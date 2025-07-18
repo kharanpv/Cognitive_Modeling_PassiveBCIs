@@ -7,7 +7,15 @@ Please read the [Project Charter](Docs/Project_Charter.md) for most up-to-date i
 You must have the following installed:
 - Python 3.11+
 - [Poetry](https://python-poetry.org/)
+- [FFmpeg](https://ffmpeg.org/download.html)
+- [Cygwin](https://www.cygwin.com/) (if using Windows)
 
-Then, in the directory, run `poetry install` the first time. After than, executing `run_program.sh` should start the program.
+## Installation and Running
 
-If you are using Windows, you must have [Cygwin](https://www.cygwin.com/) installed to run shell scripts.
+For initial setup:
+- **macOS/Linux**: Run `./bootstrap.sh`
+- **Windows**: Run `bootstrap.bat`
+
+To start the program:
+- **macOS/Linux**: Open terminal and run `./run_program.sh`
+- **Windows**: Open terminal and run `sh run_program.sh`

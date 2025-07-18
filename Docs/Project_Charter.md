@@ -73,7 +73,35 @@ The following were identified as cognitive architectures that seem usable at fir
 
 2. **LIDA** – Found at [https://ccrg.cs.memphis.edu/](https://ccrg.cs.memphis.edu/). This one attempts to incorporate the Global Workspace Theory of Consciousness.
 
+    - **Global Workspace Theory (GWT):** LIDA is based on GWT, which conceptualizes the brain as a collection of distributed processes that communicate via a shared central buffer (the "global workspace"). This buffer allows all processes to access the same information, ensuring coherence and coordination.
+    - **Cognitive Cycle:** LIDA implements a "cognitive cycle," which serves as the basic unit of processing—analogous to a clock cycle in digital systems. Each cycle consists of:
+        - **Sensory Input:** Reception of external and internal stimuli.
+        - **Perception & Understanding:** Processing and interpretation of sensory data.
+        - **Filtering (GWT):** Selection of relevant information for conscious awareness.
+        - **Broadcasting (GWT):** Distribution of selected information to all modules/processes.
+        - **Acting & Learning:** Decision-making, action execution, and updating of knowledge.
+        - **Effector Output:** Physical or virtual actions performed by the agent.
+    - **Memory Systems:** LIDA maintains an account of episodic memory, recording the user's understanding of "what happened." Previous broadcasts from the global workspace are stored in perceptual memory, supporting learning and adaptation.
+    - **Distributed Processing:** The architecture emphasizes parallel, distributed processing, with modules specialized for different cognitive functions but coordinated via the global workspace.
+    - **Limitations:** LIDA was conceived before the rise of modern natural language processing and contemporary AI advances. While its goals and structure closely align with this project's aims, some aspects may require updating or augmentation with newer techniques.
+
 3. **ACT-R** – Seems to be the most comprehensive and popular model to exist. [Website Link](http://act-r.psy.cmu.edu/)
+
+    - **Modularity:** ACT-R is highly modular, with separate systems for visual function, motor function, goal formation, and memory (both declarative and procedural). Each module contains a buffer that represents the current range of awareness, and modules interact via these buffers.
+    - **Visual System:** ACT-R models both parallel and serial processing. While multiple objects or memories can be processed in parallel, only one item passes through a serial bottleneck at any moment (e.g., a single object in the visual field or a single thought). This reflects the limitation that humans cannot truly multitask at the conscious level, but can rapidly switch attention.
+    - **Visual Pathways:** The architecture suggests the need for two visual pathways—dorsal and ventral—and potentially an eye-movement-based model (see EMMA).
+    - **Task and Goal System:** ACT-R allows for perfect serial time-sharing between tasks, with no downtime. Subgoal inference is supported.
+    - **Memory Systems:**
+        - **Declarative Memory:** Recall of a specific fact is modeled as:
+            - $A_i = B_i + \sum(W_j S_{ji})$
+            - $B_i = \ln(\sum t_j^{-d})$ where $t_j$ is the j-th practice of fact i, and d is the forgetting rate.
+            - Retrieval probability: $P_i = \frac{1}{1 + \exp(-(A_i - t)/s)}$, with s as the noise parameter.
+            - Retrieval latency: $T_i = F \exp(-A_i)$, with F as a constant.
+        - **Procedural Memory:** Procedural knowledge is represented as production rules:
+            - Utility: $U_i = P_i G - C_i$
+            - Probability: $P_i = \frac{\exp(U_i/t)}{\sum_{j=1}^n \exp(U_j/t)}$, with t as a noise parameter.
+            - Alternatively, $P = \frac{\# \text{successes}}{\# \text{successes} + \# \text{failures}}$
+    - **Limitations:** ACT-R does not accept natural language inputs, relying instead on a proprietary format. Its main focus is on matching the timing of cognitive tasks to human data, which may limit its direct applicability for broader cognitive modeling.
 
 4. **CLARION** – [Project Page](https://sites.google.com/site/drronsun/clarion/clarion-project)
 
@@ -92,7 +120,8 @@ These architectures were not deemed fully suitable, but they may still serve as 
 3. **SOAR**  
    A tight rule-based cognitive task modeling architecture. It has a robust working memory system but is supposedly not as psychologically faithful as ACT-R, LIDA, or CLARION. However, it’s worth noting that this architecture purportedly shines in representing emotion and has accurately reflected the results of certain real-life human behavioral experiments.
 
-> **ChatGPT’s recommendation:** Build your base on **LIDA** (due to alignment with your goals), borrow emotional modeling components from **Psi-Theory**, and draw structural inspiration from **ACT-R**, which is the most established—though most rigid—model.
+> **ChatGPT’s recommendation:** Build your base on **LIDA** (due to alignment with your goals and its implementation of GWT), borrow emotional modeling components from **Psi-Theory**, and draw structural inspiration from **ACT-R**, which is the most established—though most rigid—model.  
+> **Update:** LIDA's cognitive cycle and distributed processing are well-suited for this project, though some modernization may be required. ACT-R's modularity and mathematical formulations for memory and production rules are valuable for compartmentalizing cognitive abilities and modeling memory, but its primary focus on cognitive task timing makes it less suitable as a direct foundation.
 
 ---
 
@@ -157,6 +186,12 @@ The following is a list of all the activity I intend to record.
 
 #### Data Recording Architecture
 
+**Storage Requirements and Timeline:**
+- Target dataset: ~50 hours of recording sessions
+- Storage requirement: ~100 GB total (approximately 2 GB per hour)
+- Collection strategy: Continuous recording sessions until sufficient data is accumulated for model development
+
+**Technical Implementation:**
 We will use **Pynput** to record keystrokes and mouse activity.
 
 For screen recordings, we will use **mss** to take a screenshot and stitch together a recording using cv2's **VideoWriter**.
@@ -211,6 +246,12 @@ Then, some sort of **meta-framework** will wrap all these characteristics neatly
 The cognitive architecture, then, will look as follows:
 - Sub-analyses modeled with deep neural-network based machine learning.
 - Rules, laws, algorithms, and theories to compute the relationship between these different problems, inspired by existing cognitive architectures.
+
+**Note on LIDA:**  
+LIDA's cognitive cycle and distributed processing, based on Global Workspace Theory, provide a strong foundation for modeling the flow of information and coordination between cognitive modules. Its episodic memory system and perceptual memory storage are well-aligned with the goal of reconstructing a user's internal state and history. However, LIDA was developed before modern advances in natural language processing and AI, so its architecture may require updating or augmentation with contemporary techniques to fully meet the project's needs.
+
+**Note on ACT-R:**  
+While ACT-R provides useful equations and a modular approach for compartmentalizing cognitive abilities and memory (declarative and procedural), I will not be using ACT-R directly as the foundation for my cognitive model. Its primary focus is on estimating the timing of cognitive tasks, which is not fully aligned with the broader goals of this project. However, its mathematical formulations and system for separating different cognitive functions will inform the design of my own architecture.
 
 My cognitive architecture will be inspired largely by **LIDA** and **ACT-R**. Psi-Theory, while enticing, lacks computational rigor at first glance, therefore I will not proceed with it, unless I find something noticeably lacking in LIDA and ACT-R, in which case I may revisit. 
 

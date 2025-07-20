@@ -133,52 +133,54 @@ class Central_Data_Controller:
         # Post-process recordings
         
         # Screen capture
-        screen_recording_filepath = os.path.join(self.recording_folder, 'screen_capture.avi')
-        actual_duration = float(
-            subprocess.run(["ffprobe", "-v", "error", "-show_entries",
-                            "format=duration", "-of",
-                            "default=noprint_wrappers=1:nokey=1", screen_recording_filepath],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT).stdout
-        )
-    
-        latest_start_time = datetime.datetime.strptime(self.latest_start_time, '%Y-%m-%d_%H-%M-%S')
-        latest_stop_time = datetime.datetime.strptime(self.latest_stop_time, '%Y-%m-%d_%H-%M-%S')
-        nominal_duration = (latest_stop_time - latest_start_time).seconds
-
-        stretch_factor = nominal_duration / actual_duration
+        if 's' in self.active_handlers:
+            screen_recording_filepath = os.path.join(self.recording_folder, 'screen_capture.avi')
+            actual_duration = float(
+                subprocess.run(["ffprobe", "-v", "error", "-show_entries",
+                                "format=duration", "-of",
+                                "default=noprint_wrappers=1:nokey=1", screen_recording_filepath],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT).stdout
+            )
         
-        if stretch_factor > 1.01 or stretch_factor < 0.99:
-            screen_process = Process(target=process_recordings, args=(
-                self.recording_folder, 
-                'screen_capture.avi', 
-                screen_recording_filepath, 
-                stretch_factor
-                ), daemon=True)
-            screen_process.start()
+            latest_start_time = datetime.datetime.strptime(self.latest_start_time, '%Y-%m-%d_%H-%M-%S')
+            latest_stop_time = datetime.datetime.strptime(self.latest_stop_time, '%Y-%m-%d_%H-%M-%S')
+            nominal_duration = (latest_stop_time - latest_start_time).seconds
+
+            stretch_factor = nominal_duration / actual_duration
+            
+            if stretch_factor > 1.01 or stretch_factor < 0.99:
+                screen_process = Process(target=process_recordings, args=(
+                    self.recording_folder, 
+                    'screen_capture.avi', 
+                    screen_recording_filepath, 
+                    stretch_factor
+                    ), daemon=True)
+                screen_process.start()
             
         # Webcam Capture
-        screen_recording_filepath = os.path.join(self.recording_folder, 'webcam_capture.avi')
-        actual_duration = float(
-            subprocess.run(["ffprobe", "-v", "error", "-show_entries",
-                            "format=duration", "-of",
-                            "default=noprint_wrappers=1:nokey=1", screen_recording_filepath],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT).stdout
-        )
-    
-        nominal_duration = (latest_stop_time - latest_start_time).seconds
-
-        stretch_factor = nominal_duration / actual_duration
+        if 'w' in self.active_handlers:
+            screen_recording_filepath = os.path.join(self.recording_folder, 'webcam_capture.avi')
+            actual_duration = float(
+                subprocess.run(["ffprobe", "-v", "error", "-show_entries",
+                                "format=duration", "-of",
+                                "default=noprint_wrappers=1:nokey=1", screen_recording_filepath],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT).stdout
+            )
         
-        if stretch_factor > 1.01 or stretch_factor < 0.99:
-            webcam_process = Process(target=process_recordings, args=(
-                self.recording_folder, 
-                'webcam_capture.avi', 
-                screen_recording_filepath, 
-                stretch_factor
-                ), daemon=True)
-            webcam_process.start()
+            nominal_duration = (latest_stop_time - latest_start_time).seconds
+
+            stretch_factor = nominal_duration / actual_duration
+            
+            if stretch_factor > 1.01 or stretch_factor < 0.99:
+                webcam_process = Process(target=process_recordings, args=(
+                    self.recording_folder, 
+                    'webcam_capture.avi', 
+                    screen_recording_filepath, 
+                    stretch_factor
+                    ), daemon=True)
+                webcam_process.start()
 
         if screen_process:
             screen_process.join()

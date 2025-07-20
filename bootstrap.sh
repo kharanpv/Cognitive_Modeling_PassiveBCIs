@@ -19,7 +19,6 @@ fi
 PYTHON_BIN="$(command -v python3 || true)"
 PYTHON_VERSION="$($PYTHON_BIN --version 2>/dev/null | cut -d' ' -f2 || echo "0.0.0")"
 
-# Compare version (Python >= 3.11)
 version_ge() {
     printf '%s\n%s\n' "$1" "$2" | sort -V -C
 }
@@ -35,7 +34,6 @@ else
     echo "✅ Python $PYTHON_VERSION is already installed."
 fi
 
-# Use Python 3.11 explicitly
 PYTHON_BIN=$(command -v python3.11 || command -v python3)
 
 # -------- 2. Check Poetry --------
@@ -87,14 +85,11 @@ else
     bash download_models.sh
 
     echo "🔧 Building OpenFace..."
-    cd lib
-    mkdir -p build && cd build
-    cmake ..
+    mkdir -p build
+    cd build
+    cmake ..  # Use root-level CMakeLists.txt
     make -j$(nproc || sysctl -n hw.ncpu)
 
-    cd ../../build
-    cmake ..
-    make -j$(nproc || sysctl -n hw.ncpu)
     popd
 fi
 

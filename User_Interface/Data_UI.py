@@ -44,15 +44,13 @@ class DataUI:
 
     def _setup_ui(self):
         """
-        Set up the main UI components including status box, title,
+        Set up the main UI components including title,
         checkboxes, location selection, and recording controls.
         """
-        self._setup_status_box()
+        self.title_frame = tk.Frame(self.parent_frame)
+        self.title_frame.pack(side='top', fill='x', pady=10)
         
-        title_frame = tk.Frame(self.parent_frame)
-        title_frame.pack(side='top', fill='x', pady=10)
-        
-        title_label = tk.Label(title_frame, text="Data", font=("Arial", 16, "bold"))
+        title_label = tk.Label(self.title_frame, text="Data", font=("Arial", 16, "bold"))
         title_label.pack()
         
         # Timer label placeholder (starts hidden)
@@ -61,30 +59,7 @@ class DataUI:
         self._setup_checkboxes()
         self._setup_location_selection()
         self._setup_recording_controls()
-    
-    def _setup_status_box(self):
-        """
-        Create and configure the status display box that shows current
-        program state and recording status.
-        """
-        status_frame = tk.Frame(self.parent_frame, padx=20, pady=10)
-        status_frame.pack(side='top', fill='x')
-        
-        status_label = tk.Label(status_frame, text="Program Status:", anchor='w')
-        status_label.pack(side='left')
-        
-        self.status_text = tk.Label(status_frame, text="Ready", anchor='w', fg="green")
-        self.status_text.pack(side='left', padx=5)
-    
-    def _update_status(self, message, color="black"):
-        """
-        Update the status message display.
 
-        Args:
-            message (str): Status message to display
-            color (str): Color of the status text (default: "black")
-        """
-        self.status_text.config(text=message, fg=color)
     
     def _setup_checkboxes(self):
         """
@@ -214,21 +189,21 @@ class DataUI:
             recording_modes_selected = True
 
         if not recording_modes_selected:
-            self._update_status("No recording modes selected", "red")
+            self.app.update_status("No recording modes selected", "red")
             return
 
         try:
-            self._update_status("Starting recording...", "orange")
+            self.app.update_status("Starting recording...", "orange")
             self.parent_frame.update()  # Force UI update
             
             self.app.central_data_controller.start_recording()
-            self._update_status("Recording Started", "blue")
+            self.app.update_status("Recording Started", "blue")
             
             # Start the timer
             self._start_timer()
             
         except Exception as e:
-            self._update_status(f"Error: {str(e)}", "red")
+            self.app.update_status(f"Error: {str(e)}", "red")
             print(f"Error in start_recording: {e}")
     
     def _end_recording(self):
@@ -237,7 +212,7 @@ class DataUI:
         Updates the UI status and stops the recording timer.
         """
         if len(self.app.central_data_controller.active_handlers) > 0:
-            self._update_status("Processing recordings", "yellow")
+            self.app.update_status("Processing recordings", "yellow")
             self.app.central_data_controller.stop_recording(self.location_entry.get())
             
             # Stop the timer
@@ -250,11 +225,11 @@ class DataUI:
             ).start()
 
         else:
-            self._update_status("No recording was in progress", "orange")
+            self.app.update_status("No recording was in progress", "orange")
     
     def _run_post_processing_thread(self):
         self.app.central_data_controller._process_recordings()
-        self.parent_frame.after(0, lambda: self._update_status("Recording Ended", "green"))
+        self.parent_frame.after(0, lambda: self.app.update_status("Recording Ended", "green"))
 
     def _start_timer(self):
         """
@@ -263,7 +238,7 @@ class DataUI:
         """
         self.recording_start_time = time.time()
         self.recording_timer_label.config(text="Recording for: 00:00:00", fg="gray")
-        self.recording_timer_label.pack(after=self.status_text.master)
+        self.recording_timer_label.pack(after=self.title_frame)
         self._update_timer()
 
     def _update_timer(self):

@@ -121,11 +121,10 @@ class Central_Data_Controller:
         
         if 's' in self.active_handlers:
             self.screen_handler.trigger_listener('stop', self.recording_folder)
-            self.active_handlers.remove('s')
         
         if 'w' in self.active_handlers:
             self.webcam_handler.trigger_listener('stop', self.recording_folder)
-            self.active_handlers.remove('w')
+
 
     def _process_recordings(self):
         screen_process = None
@@ -134,6 +133,9 @@ class Central_Data_Controller:
         
         # Screen capture
         if 's' in self.active_handlers:
+
+            self.active_handlers.remove('s')
+
             screen_recording_filepath = os.path.join(self.recording_folder, 'screen_capture.avi')
             actual_duration = float(
                 subprocess.run(["ffprobe", "-v", "error", "-show_entries",
@@ -160,6 +162,9 @@ class Central_Data_Controller:
             
         # Webcam Capture
         if 'w' in self.active_handlers:
+
+            self.active_handlers.remove('w')
+            
             screen_recording_filepath = os.path.join(self.recording_folder, 'webcam_capture.avi')
             actual_duration = float(
                 subprocess.run(["ffprobe", "-v", "error", "-show_entries",

@@ -30,6 +30,9 @@ class AppUI:
         self._setup_frames()
 
     def _setup_frames(self):
+        # Program status at the top
+        self._setup_status_box()
+        
         # Main containers
         left_frame = tk.Frame(self.root, width=600, height=800)
         right_frame = tk.Frame(self.root, width=600, height=800)
@@ -40,6 +43,30 @@ class AppUI:
         # Create UI components
         self.data_ui = DataUI(left_frame, self)
         self.model_ui = ModelUI(right_frame, self)
+
+    def _setup_status_box(self):
+        """
+        Create and configure the status display box that shows current
+        program state and is shared across all UI components.
+        """
+        status_frame = tk.Frame(self.root, padx=20, pady=10)
+        status_frame.pack(side='top', fill='x')
+        
+        status_label = tk.Label(status_frame, text="Program Status:", anchor='w')
+        status_label.pack(side='left')
+        
+        self.status_text = tk.Label(status_frame, text="Ready", anchor='w', fg="green")
+        self.status_text.pack(side='left', padx=5)
+    
+    def update_status(self, message, color="black"):
+        """
+        Update the status message display.
+
+        Args:
+            message (str): Status message to display
+            color (str): Color of the status text (default: "black")
+        """
+        self.status_text.config(text=message, fg=color)
 
 
 if __name__ == "__main__":

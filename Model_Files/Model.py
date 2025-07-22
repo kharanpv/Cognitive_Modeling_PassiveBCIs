@@ -1,4 +1,4 @@
-from Processing_Module.Webcam_Process import Webcam_Process
+from .Processing_Module.Webcam_Process import Webcam_Process
 
 class Model:
     def __init__(self):

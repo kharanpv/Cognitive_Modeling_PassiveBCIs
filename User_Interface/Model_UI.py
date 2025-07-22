@@ -1,8 +1,8 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, BooleanVar, Checkbutton
 import os
-import sys
 import multiprocessing
+import json
 from Model_Files.Model import Model
 
 class ModelUI:
@@ -24,6 +24,9 @@ class ModelUI:
         self.parent_frame = parent_frame
         self.app = app_instance
         
+        # Initialize checkbox variable
+        self.create_tracked_video_var = BooleanVar()
+        
         # Create top_right and bottom_right frames
         self.top_frame = tk.Frame(self.parent_frame, height=400)
         self.bottom_frame = tk.Frame(self.parent_frame, height=400)
@@ -41,6 +44,7 @@ class ModelUI:
         """
         self._setup_title()
         self._setup_location_selection()
+        self._setup_tracked_video_option()
         self._setup_model_controls()
 
         
@@ -77,6 +81,17 @@ class ModelUI:
         
         open_button = tk.Button(location_frame, text="Open Location", command=self._open_location)
         open_button.pack(anchor='w', pady=5)
+    
+    def _setup_tracked_video_option(self):
+        """
+        Create a checkbox for the tracked video creation option.
+        """
+        option_frame = tk.Frame(self.top_frame, padx=20, pady=10)
+        option_frame.pack(side='top', fill='x')
+        
+        tracked_video_checkbox = Checkbutton(option_frame, text="Create tracked video", 
+                                           variable=self.create_tracked_video_var)
+        tracked_video_checkbox.pack(anchor='w')
     
     def _setup_model_controls(self):
         """
@@ -152,6 +167,9 @@ class ModelUI:
                 self.app.update_status("Error: Invalid data folder path", "red")
                 return
             
+            # Create/update config.json with tracked video setting
+            self._update_config_file()
+            
             # Update status to show model creation is starting
             self.app.update_status("Creating Model", "#8A2BE2")  # Violet color
             
@@ -175,6 +193,43 @@ class ModelUI:
         except Exception as e:
             # Handle any errors in the main thread
             error_msg = f"Error starting model creation: {str(e)}"
+            self.app.update_status(error_msg, "red")
+            print(error_msg)
+    
+    def _update_config_file(self):
+        """
+        Create or update the config.json file in Processing_Module with the tracked video setting.
+        """
+        try:
+            # Get the path to the Processing_Module directory
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            processing_module_dir = os.path.join(os.path.dirname(script_dir), "Model_Files", "Processing_Module")
+            config_path = os.path.join(processing_module_dir, "config.json")
+            
+            # Load existing config if it exists, otherwise start with empty dict
+            config = {}
+            if os.path.exists(config_path):
+                try:
+                    with open(config_path, 'r') as f:
+                        config = json.load(f)
+                except (json.JSONDecodeError, Exception):
+                    # If file is corrupted or empty, start fresh
+                    config = {}
+            
+            # Update the tracked video setting
+            config["create_tracked_video"] = self.create_tracked_video_var.get()
+            
+            # Ensure the Processing_Module directory exists
+            os.makedirs(processing_module_dir, exist_ok=True)
+            
+            # Write the updated config
+            with open(config_path, 'w') as f:
+                json.dump(config, f, indent=2)
+            
+            print(f"Config updated: create_tracked_video = {config['create_tracked_video']}")
+            
+        except Exception as e:
+            error_msg = f"Error updating config file: {str(e)}"
             self.app.update_status(error_msg, "red")
             print(error_msg)
     

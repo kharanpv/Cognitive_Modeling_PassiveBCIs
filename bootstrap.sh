@@ -70,6 +70,25 @@ if [[ -f "$FEATURE_EXE" ]]; then
 else
     echo "🧠 Installing OpenFace..."
 
+    # -------- macOS-specific dependencies --------
+    if [[ "$OS" == "mac" ]]; then
+        # Check for wget
+        if ! command -v wget &> /dev/null; then
+            echo "📥 Installing wget for macOS..."
+            brew install wget
+        else
+            echo "✅ wget is already installed."
+        fi
+
+        # Check for dlib
+        if ! python3 -c "import dlib" &> /dev/null; then
+            echo "🔧 Installing dlib for macOS..."
+            brew install dlib
+        else
+            echo "✅ dlib is already installed."
+        fi
+    fi
+
     mkdir -p external
     git clone https://github.com/TadasBaltrusaitis/OpenFace.git "$OPENFACE_DIR"
 

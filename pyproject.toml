@@ -10,12 +10,13 @@ packages = [{ include = "*" }]
 python = ">=3.12,<4.0"
 pynput = "^1.8.1"
 pandas = "^2.2.3"
-numpy = "^2.2.6"
+numpy = "^1.26"
 opencv-python = "^4.11.0"
 mss = "^10.0.0"
 pyautogui = "^0.9.54"
 easyocr = "^1.7.2"
 torch = "2.2.2"
+numpyencoder = "^0.3.2"
 
 [build-system]
 requires = ["poetry-core>=1.7.0"]

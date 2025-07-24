@@ -38,9 +38,6 @@ class Webcam_Process:
 
             output_dir = data_folder / 'Openface' / output_foldername
             output_dir.mkdir(parents=True, exist_ok=True)
-            
-            print(file)
-            print(output_dir)
 
             subprocess.run([
                 self.openface_exe_path,

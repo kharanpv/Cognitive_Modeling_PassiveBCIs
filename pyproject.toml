@@ -1,26 +1,22 @@
-[project]
+[tool.poetry]
 name = "cognitive-modeling-passivebcis"
 version = "1.0"
 description = "All the dependencies of the project."
-authors = [
-    {name = "Prateek",email = "kharanpv@mail.uc.edu"}
-]
+authors = ["Prateek <kharanpv@mail.uc.edu>"]
 readme = "README.md"
-requires-python = ">=3.11"
-dependencies = [
-    "pynput (>=1.8.1,<2.0.0)",
-    "pandas (>=2.2.3,<3.0.0)",
-    "numpy (>=2.2.6,<3.0.0)",
-    "opencv-python (>=4.11.0.86,<5.0.0.0)",
-    "mss (>=10.0.0,<11.0.0)",
-    "pyautogui (>=0.9.54,<0.10.0)",
-    "pytest (>=8.4.0,<9.0.0)"
-]
+packages = [{ include = "*" }]
 
+[tool.poetry.dependencies]
+python = ">=3.12,<4.0"
+pynput = "^1.8.1"
+pandas = "^2.2.3"
+numpy = "^2.2.6"
+opencv-python = "^4.11.0"
+mss = "^10.0.0"
+pyautogui = "^0.9.54"
+easyocr = "^1.7.2"
+torch = "2.2.2"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core>=1.7.0"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
-package-mode = false

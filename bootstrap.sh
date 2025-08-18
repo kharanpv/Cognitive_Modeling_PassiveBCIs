@@ -34,7 +34,7 @@ else
     echo "✅ Python $PYTHON_VERSION is already installed."
 fi
 
-PYTHON_BIN=$(command -v python3.11 || command -v python3)
+PYTHON_BIN=$(command -v python3.12 || command -v python3)
 
 # -------- 2. Check Poetry --------
 if ! command -v poetry &> /dev/null; then

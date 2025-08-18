@@ -99,9 +99,9 @@ else
 
     echo "📦 Installing OpenFace dependencies..."
     if [[ "$OS" == "linux" ]]; then
-        sudo apt install -y cmake g++ libopencv-dev libboost-all-dev libtbb-dev
+        sudo apt install -y cmake g++ libopencv-dev libboost-all-dev libtbb-dev libopenblas-dev
     elif [[ "$OS" == "mac" ]]; then
-        brew install cmake boost tbb opencv
+        brew install cmake boost tbb opencv openblas
     fi
 
     echo "📥 Downloading models..."

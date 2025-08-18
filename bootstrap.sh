@@ -99,9 +99,35 @@ else
 
     echo "📦 Installing OpenFace dependencies..."
     if [[ "$OS" == "linux" ]]; then
-        sudo apt install -y cmake g++ libopencv-dev libboost-all-dev libtbb-dev libopenblas-dev libdlib-dev
+        # Core build tools and libraries
+        sudo apt install -y build-essential cmake g++ gcc-8 g++-8
+        # OpenCV and its dependencies
+        sudo apt install -y libopencv-dev libopencv-contrib-dev
+        # Boost libraries (minimum 1.5.9)
+        sudo apt install -y libboost-all-dev libboost-filesystem-dev libboost-system-dev
+        # OpenBLAS (required)
+        sudo apt install -y libopenblas-dev liblapack-dev libblas-dev
+        # dlib (minimum 19.13)
+        sudo apt install -y libdlib-dev
+        # Threading Building Blocks
+        sudo apt install -y libtbb-dev
+        # Additional dependencies
+        sudo apt install -y pkg-config
     elif [[ "$OS" == "mac" ]]; then
-        brew install cmake boost tbb opencv openblas dlib
+        # Core build tools
+        brew install cmake gcc
+        # OpenCV
+        brew install opencv
+        # Boost (minimum 1.5.9)
+        brew install boost
+        # OpenBLAS (required)
+        brew install openblas lapack
+        # dlib (minimum 19.13)
+        brew install dlib
+        # Threading Building Blocks
+        brew install tbb
+        # Additional dependencies
+        brew install pkg-config
     fi
 
     echo "📥 Downloading models..."

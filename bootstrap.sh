@@ -23,12 +23,12 @@ version_ge() {
     printf '%s\n%s\n' "$1" "$2" | sort -V -C
 }
 
-if [[ -z "$PYTHON_BIN" || ! $(version_ge "$PYTHON_VERSION" "3.11") ]]; then
-    echo "🐍 Installing Python 3.11+..."
+if [[ -z "$PYTHON_BIN" || ! $(version_ge "$PYTHON_VERSION" "3.12") ]]; then
+    echo "🐍 Installing Python 3.12+..."
     if [[ "$OS" == "linux" ]]; then
-        sudo apt update && sudo apt install -y python3.11 python3.11-venv python3.11-dev
+        sudo apt update && sudo apt install -y python3.12 python3.12-venv python3.12-dev
     elif [[ "$OS" == "mac" ]]; then
-        brew install python@3.11
+        brew install python@3.12
     fi
 else
     echo "✅ Python $PYTHON_VERSION is already installed."

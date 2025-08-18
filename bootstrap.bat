@@ -10,7 +10,7 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-:: -------- Check Python 3.11+ --------
+:: -------- Check Python 3.12+ --------
 echo [*] Checking Python installation...
 for /f "delims=" %%i in ('python --version 2^>nul') do set PYVER=%%i
 
@@ -23,8 +23,8 @@ for /f "tokens=2 delims= " %%v in ("%PYVER%") do (
 )
 
 if %PYOK%==0 (
-    echo [!] Installing Python 3.11...
-    winget install -e --id Python.Python.3.11
+    echo [!] Installing Python 3.12...
+    winget install -e --id Python.Python.3.12
 ) else (
     echo [✓] Python is already installed: %VER%
 )

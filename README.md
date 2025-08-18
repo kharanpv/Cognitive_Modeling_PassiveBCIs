@@ -5,7 +5,7 @@ Please read the [Project Charter](Docs/Project_Charter.md) for most up-to-date i
 ## Requirements
 
 You must have the following installed:
-- Python 3.11+
+- Python 3.12+
 - [Poetry](https://python-poetry.org/)
 - [FFmpeg](https://ffmpeg.org/download.html)
 - [Cygwin](https://www.cygwin.com/) (if using Windows)

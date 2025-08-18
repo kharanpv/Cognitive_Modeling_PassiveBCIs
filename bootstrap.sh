@@ -99,35 +99,154 @@ else
 
     echo "📦 Installing OpenFace dependencies..."
     if [[ "$OS" == "linux" ]]; then
-        # Core build tools and libraries
-        sudo apt install -y build-essential cmake g++ gcc-8 g++-8
-        # OpenCV and its dependencies
-        sudo apt install -y libopencv-dev libopencv-contrib-dev
-        # Boost libraries (minimum 1.5.9)
-        sudo apt install -y libboost-all-dev libboost-filesystem-dev libboost-system-dev
-        # OpenBLAS (required)
-        sudo apt install -y libopenblas-dev liblapack-dev libblas-dev
-        # dlib (minimum 19.13)
-        sudo apt install -y libdlib-dev
-        # Threading Building Blocks
-        sudo apt install -y libtbb-dev
-        # Additional dependencies
-        sudo apt install -y pkg-config
+        # Check and install core build tools
+        if ! command -v cmake &> /dev/null; then
+            echo "🔨 Installing cmake..."
+            sudo apt install -y cmake
+        else
+            echo "✅ cmake is already installed."
+        fi
+
+        if ! dpkg -l | grep -q "build-essential"; then
+            echo "🔨 Installing build-essential..."
+            sudo apt install -y build-essential
+        else
+            echo "✅ build-essential is already installed."
+        fi
+
+        # Check and install GCC-8
+        if ! command -v gcc-8 &> /dev/null; then
+            echo "🔨 Installing GCC-8..."
+            # Try package manager first
+            if ! sudo apt install -y gcc-8 g++-8 2>/dev/null; then
+                echo "📥 GCC-8 not available in repos, installing manually..."
+                # Download GCC-8 packages manually
+                wget http://mirrors.kernel.org/ubuntu/pool/universe/g/gcc-8/gcc-8_8.4.0-3ubuntu2_amd64.deb
+                wget http://mirrors.edge.kernel.org/ubuntu/pool/universe/g/gcc-8/gcc-8-base_8.4.0-3ubuntu2_amd64.deb
+                wget http://mirrors.kernel.org/ubuntu/pool/universe/g/gcc-8/libgcc-8-dev_8.4.0-3ubuntu2_amd64.deb
+                wget http://mirrors.kernel.org/ubuntu/pool/universe/g/gcc-8/cpp-8_8.4.0-3ubuntu2_amd64.deb
+                wget http://mirrors.kernel.org/ubuntu/pool/universe/g/gcc-8/libmpx2_8.4.0-3ubuntu2_amd64.deb
+                wget http://mirrors.kernel.org/ubuntu/pool/main/i/isl/libisl22_0.22.1-1_amd64.deb
+                sudo apt install -y ./libisl22_0.22.1-1_amd64.deb ./libmpx2_8.4.0-3ubuntu2_amd64.deb ./cpp-8_8.4.0-3ubuntu2_amd64.deb ./libgcc-8-dev_8.4.0-3ubuntu2_amd64.deb ./gcc-8-base_8.4.0-3ubuntu2_amd64.deb ./gcc-8_8.4.0-3ubuntu2_amd64.deb
+                # Clean up downloaded packages
+                rm -f *.deb
+            fi
+        else
+            echo "✅ GCC-8 is already installed."
+        fi
+
+        # Check and install OpenCV
+        if ! pkg-config --exists opencv4 2>/dev/null && ! pkg-config --exists opencv 2>/dev/null; then
+            echo "📹 Installing OpenCV..."
+            sudo apt install -y libopencv-dev libopencv-contrib-dev
+        else
+            echo "✅ OpenCV is already installed."
+        fi
+
+        # Check and install Boost
+        if ! dpkg -l | grep -q "libboost-all-dev"; then
+            echo "🚀 Installing Boost libraries..."
+            sudo apt install -y libboost-all-dev libboost-filesystem-dev libboost-system-dev
+        else
+            echo "✅ Boost libraries are already installed."
+        fi
+
+        # Check and install OpenBLAS
+        if ! dpkg -l | grep -q "libopenblas-dev"; then
+            echo "🧮 Installing OpenBLAS..."
+            sudo apt install -y libopenblas-dev liblapack-dev libblas-dev
+        else
+            echo "✅ OpenBLAS is already installed."
+        fi
+
+        # Check and install dlib
+        if ! dpkg -l | grep -q "libdlib-dev"; then
+            echo "🤖 Installing dlib..."
+            sudo apt install -y libdlib-dev
+        else
+            echo "✅ dlib is already installed."
+        fi
+
+        # Check and install TBB
+        if ! dpkg -l | grep -q "libtbb-dev"; then
+            echo "🧵 Installing Threading Building Blocks..."
+            sudo apt install -y libtbb-dev
+        else
+            echo "✅ TBB is already installed."
+        fi
+
+        # Check and install pkg-config
+        if ! command -v pkg-config &> /dev/null; then
+            echo "⚙️ Installing pkg-config..."
+            sudo apt install -y pkg-config
+        else
+            echo "✅ pkg-config is already installed."
+        fi
+
     elif [[ "$OS" == "mac" ]]; then
-        # Core build tools
-        brew install cmake gcc
-        # OpenCV
-        brew install opencv
-        # Boost (minimum 1.5.9)
-        brew install boost
-        # OpenBLAS (required)
-        brew install openblas lapack
-        # dlib (minimum 19.13)
-        brew install dlib
-        # Threading Building Blocks
-        brew install tbb
-        # Additional dependencies
-        brew install pkg-config
+        # Check and install cmake
+        if ! command -v cmake &> /dev/null; then
+            echo "🔨 Installing cmake..."
+            brew install cmake
+        else
+            echo "✅ cmake is already installed."
+        fi
+
+        # Check and install GCC
+        if ! command -v gcc-11 &> /dev/null && ! command -v gcc-12 &> /dev/null; then
+            echo "🔨 Installing GCC..."
+            brew install gcc
+        else
+            echo "✅ GCC is already installed."
+        fi
+
+        # Check and install OpenCV
+        if ! brew list opencv &> /dev/null; then
+            echo "📹 Installing OpenCV..."
+            brew install opencv
+        else
+            echo "✅ OpenCV is already installed."
+        fi
+
+        # Check and install Boost
+        if ! brew list boost &> /dev/null; then
+            echo "🚀 Installing Boost..."
+            brew install boost
+        else
+            echo "✅ Boost is already installed."
+        fi
+
+        # Check and install OpenBLAS
+        if ! brew list openblas &> /dev/null; then
+            echo "🧮 Installing OpenBLAS..."
+            brew install openblas lapack
+        else
+            echo "✅ OpenBLAS is already installed."
+        fi
+
+        # Check and install dlib
+        if ! brew list dlib &> /dev/null; then
+            echo "🤖 Installing dlib..."
+            brew install dlib
+        else
+            echo "✅ dlib is already installed."
+        fi
+
+        # Check and install TBB
+        if ! brew list tbb &> /dev/null; then
+            echo "🧵 Installing TBB..."
+            brew install tbb
+        else
+            echo "✅ TBB is already installed."
+        fi
+
+        # Check and install pkg-config
+        if ! command -v pkg-config &> /dev/null; then
+            echo "⚙️ Installing pkg-config..."
+            brew install pkg-config
+        else
+            echo "✅ pkg-config is already installed."
+        fi
     fi
 
     echo "📥 Downloading models..."

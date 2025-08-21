@@ -31,8 +31,25 @@ if [[ -z "$PYTHON_BIN" || ! $(version_ge "$PYTHON_VERSION" "3.12") ]]; then
         sudo add-apt-repository ppa:deadsnakes/ppa -y
         sudo apt update
         sudo apt install -y python3.12 python3.12-venv python3.12-dev
+        
+        # Configure python3 to point to python3.12
+        echo "🔧 Configuring python3 to use Python 3.12..."
+        sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
+        sudo update-alternatives --set python3 /usr/bin/python3.12
+        
     elif [[ "$OS" == "mac" ]]; then
         brew install python@3.12
+        
+        # Configure python3 to point to python3.12
+        echo "🔧 Configuring python3 to use Python 3.12..."
+        # Create symlink or add to PATH
+        if [[ -f "/opt/homebrew/bin/python3.12" ]]; then
+            # Apple Silicon Mac
+            sudo ln -sf /opt/homebrew/bin/python3.12 /usr/local/bin/python3
+        elif [[ -f "/usr/local/bin/python3.12" ]]; then
+            # Intel Mac
+            sudo ln -sf /usr/local/bin/python3.12 /usr/local/bin/python3
+        fi
     fi
 else
     echo "✅ Python $PYTHON_VERSION is already installed."

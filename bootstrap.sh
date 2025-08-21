@@ -25,6 +25,7 @@ version_ge() {
 
 if [[ -z "$PYTHON_BIN" || ! $(version_ge "$PYTHON_VERSION" "3.12") ]]; then
     echo "🐍 Installing Python 3.12+..."
+    PYTHON_NEWLY_INSTALLED=true
     if [[ "$OS" == "linux" ]]; then
         sudo apt update
         sudo apt install -y software-properties-common
@@ -36,11 +37,15 @@ if [[ -z "$PYTHON_BIN" || ! $(version_ge "$PYTHON_VERSION" "3.12") ]]; then
     fi
 else
     echo "✅ Python $PYTHON_VERSION is already installed."
+    PYTHON_NEWLY_INSTALLED=false
 fi
 
-
-PYTHON_BIN=$(command -v python3.12)
-if [[ -z "$PYTHON_BIN" ]]; then
+# Set PYTHON_BIN based on whether we just installed Python 3.12
+if [[ "$PYTHON_NEWLY_INSTALLED" == true ]]; then
+    # Use python3.12 directly since we just installed it
+    PYTHON_BIN=$(command -v python3.12)
+else
+    # Use existing python3 since it already meets requirements
     PYTHON_BIN=$(command -v python3)
 fi
 

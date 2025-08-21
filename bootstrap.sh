@@ -40,13 +40,24 @@ else
     PYTHON_NEWLY_INSTALLED=false
 fi
 
-# Set PYTHON_BIN based on whether we just installed Python 3.12
-if [[ "$PYTHON_NEWLY_INSTALLED" == true ]]; then
-    # Use python3.12 directly since we just installed it
-    PYTHON_BIN=$(command -v python3.12)
+# Set PYTHON_BIN based on whether python3 points to python3.12
+PYTHON3_BIN=$(command -v python3)
+PYTHON312_BIN=$(command -v python3.12)
+
+if [[ -n "$PYTHON312_BIN" ]]; then
+    PYTHON3_VERSION="$($PYTHON3_BIN --version 2>/dev/null | cut -d' ' -f2 || echo "0.0.0")"
+    PYTHON312_VERSION="$($PYTHON312_BIN --version 2>/dev/null | cut -d' ' -f2 || echo "0.0.0")"
+    
+    if [[ "$PYTHON3_VERSION" != "$PYTHON312_VERSION" ]]; then
+        # python3 doesn't point to python3.12, use python3.12 directly
+        PYTHON_BIN="$PYTHON312_BIN"
+    else
+        # python3 already points to python3.12, use python3
+        PYTHON_BIN="$PYTHON3_BIN"
+    fi
 else
-    # Use existing python3 since it already meets requirements
-    PYTHON_BIN=$(command -v python3)
+    # python3.12 not available, use python3
+    PYTHON_BIN="$PYTHON3_BIN"
 fi
 
 # -------- 2. Check Poetry --------

@@ -50,7 +50,7 @@ if [[ -n "$PYTHON312_BIN" ]]; then
     
     if [[ "$PYTHON3_VERSION" != "$PYTHON312_VERSION" ]]; then
         # python3 doesn't point to python3.12, use python3.12 directly
-        PYTHON_BIN="$PYTHON312_BIN"
+        export PYTHON_BIN="$PYTHON312_BIN"
     else
         # python3 already points to python3.12, use python3
         PYTHON_BIN="$PYTHON3_BIN"
@@ -83,7 +83,7 @@ fi
 
 # -------- 4. Poetry Install --------
 echo "📦 Installing Python dependencies with Poetry..."
-poetry env use "$PYTHON_BIN"
+poetry env use "$PYTHON_BIN" --force
 poetry install
 
 # -------- 5. OpenFace Install --------

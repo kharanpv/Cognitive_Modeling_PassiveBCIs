@@ -69,6 +69,10 @@ else
     echo "✅ Poetry is already installed."
 fi
 
+# Ensure Poetry path is in bashrc and sourced
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+
 # -------- 3. Check FFmpeg --------
 if ! command -v ffmpeg &> /dev/null; then
     echo "🎞️ Installing FFmpeg..."

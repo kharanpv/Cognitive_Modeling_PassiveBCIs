@@ -83,7 +83,7 @@ fi
 
 # -------- 4. Poetry Install --------
 echo "📦 Installing Python dependencies with Poetry..."
-poetry env use "$PYTHON_BIN" --force
+poetry env use "$PYTHON_BIN"
 poetry install
 
 # -------- 5. OpenFace Install --------

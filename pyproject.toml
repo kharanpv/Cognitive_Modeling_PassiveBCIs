@@ -17,6 +17,7 @@ pyautogui = "^0.9.54"
 easyocr = "^1.7.2"
 torch = "2.2.2"
 numpyencoder = "^0.3.2"
+dlib = ">=19.13"
 
 [build-system]
 requires = ["poetry-core>=1.7.0"]

@@ -176,12 +176,18 @@ else
             echo "✅ OpenBLAS is already installed."
         fi
 
-        # Check and install dlib
-        if ! dpkg -l | grep -q "libdlib-dev"; then
-            echo "🤖 Installing dlib..."
+        # Check and install dlib (minimum 19.13)
+        DLIB_VERSION=""
+        if dpkg -l | grep -q "libdlib-dev"; then
+            # Try to get dlib version from pkg-config or dpkg
+            DLIB_VERSION=$(dpkg -l | grep libdlib-dev | awk '{print $3}' | cut -d'-' -f1 2>/dev/null || echo "0.0.0")
+        fi
+        
+        if [[ -z "$DLIB_VERSION" || ! $(version_ge "$DLIB_VERSION" "19.13") ]]; then
+            echo "🤖 Installing dlib (minimum version 19.13)..."
             sudo apt install -y libdlib-dev
         else
-            echo "✅ dlib is already installed."
+            echo "✅ dlib version $DLIB_VERSION is already installed."
         fi
 
         # Check and install TBB
@@ -241,12 +247,22 @@ else
             echo "✅ OpenBLAS is already installed."
         fi
 
-        # Check and install dlib
-        if ! brew list dlib &> /dev/null; then
-            echo "🤖 Installing dlib..."
-            brew install dlib
+        # Check and install dlib (minimum 19.13)
+        DLIB_VERSION=""
+        if brew list dlib &> /dev/null; then
+            # Get dlib version from brew
+            DLIB_VERSION=$(brew list --versions dlib 2>/dev/null | awk '{print $2}' || echo "0.0.0")
+        fi
+        
+        if [[ -z "$DLIB_VERSION" || ! $(version_ge "$DLIB_VERSION" "19.13") ]]; then
+            echo "🤖 Installing dlib (minimum version 19.13)..."
+            if brew list dlib &> /dev/null; then
+                brew upgrade dlib
+            else
+                brew install dlib
+            fi
         else
-            echo "✅ dlib is already installed."
+            echo "✅ dlib version $DLIB_VERSION is already installed."
         fi
 
         # Check and install TBB
